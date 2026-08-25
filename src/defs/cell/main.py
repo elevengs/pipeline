@@ -65,8 +65,8 @@ class Cell:
         if self._map is None:
             from .crop_mask import cropped_cell_mask
 
-            region, mask = cropped_cell_mask(self)
+            bounding_box, mask = cropped_cell_mask(self)
 
-            self._map = CellMap(region, mask)
+            self._map = CellMap(bounding_box, mask)
         return self._map
         

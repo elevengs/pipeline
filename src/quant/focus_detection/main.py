@@ -11,8 +11,10 @@ from .config import FocusDetectionConfig
 
 def create_circle_mask(shape, center, radius):
 
-    Y, X = np.ogrid[:shape[0], :shape[1]]
-    dist_from_center = np.sqrt((X - center[0]) ** 2 + (Y - center[1]) ** 2)
+    grids = np.ogrid[:shape[0], :shape[1]]
+    dist_from_center = np.sqrt(
+        (grids[0] - center[0]) ** 2 + (grids[1] - center[1]) ** 2
+    )
     mask = dist_from_center <= radius
     return mask
 
@@ -41,7 +43,7 @@ def detect_foci(
     if fluor_layer_data is None:
         raise Exception("attempting to detect foci in cell on a non-fluorescence layer")
 
-    crop = cell.map.region.crop
+    crop = cell.map.bounding_box.crop
 
     masked_fluor = crop(fluor_layer_data.fluor_final) * (
         crop(dilated_labels) == cell.label
@@ -76,13 +78,14 @@ def detect_foci(
     for i, blob in enumerate(blobs):
         blob_mask = np.zeros((masked_fluor.shape[0], masked_fluor.shape[1]))
 
-        row, col, r = blob  # foci coordinate and radius
+        coordinates = blob[:2]
+        radius = blob[2]  # foci coordinate and radius
 
         # Mask each focus to determine its area and total intensity
         blob_grid = create_circle_mask(
             masked_fluor.shape,
-            center=(col, row),
-            radius=2 * r,
+            center=coordinates,
+            radius=2 * radius,
         )       
         blob_mask[blob_grid] = 1
 
@@ -94,7 +97,7 @@ def detect_foci(
         focus_tot_intensity = np.sum(masked_focus)
         focus_max_intensity = np.max(masked_focus)
 
-        cell_point = locate(cell.map, np.asarray([row, col])) 
+        cell_point = locate(cell.map, coordinates)
 
         foci.append(
             Focus(
@@ -102,9 +105,9 @@ def detect_foci(
                 i,
                 cell_point,
                 SimpleNamespace(
-                    x=col, 
-                    y=row, 
-                    radius=r, 
+                    dim_0_coordinate = coordinates[0],
+                    dim_1_coordinate = coordinates[1],
+                    radius=radius,
                     area=focus_area,
                     tot_intensity=focus_tot_intensity,
                     max_intensity=focus_max_intensity

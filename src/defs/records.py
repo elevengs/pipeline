@@ -1,3 +1,4 @@
+from types import SimpleNamespace
 from collections.abc import Callable, Iterable
 
 import pandas as pd
@@ -34,3 +35,15 @@ def objects_to_dataframe(
         rows.append(values)
 
     return pd.DataFrame(rows, columns=columns)
+
+def row_to_properties(
+    row: pd.Series,
+    properties_prefix: str
+) -> SimpleNamespace:
+    res = SimpleNamespace()
+    for column, value in row.items():
+        if not isinstance(column, str) or not column.startswith(properties_prefix) or pd.isna(value):
+            continue
+        setattr(res, column.removeprefix(properties_prefix).lower(), value)
+    return res
+    

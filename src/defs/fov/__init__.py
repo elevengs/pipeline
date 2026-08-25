@@ -1,4 +1,4 @@
-from .main import Channel, FOV, ImageDimensions, Layer, Region
+from .main import BoundingBox, Channel, FOV, ImageDimensions, Layer
 from .load import load
 from .util import get_all_cell_props
 
@@ -7,7 +7,7 @@ __all__ = [
     "FOV",
     "ImageDimensions",
     "Layer",
-    "Region",
+    "BoundingBox",
     "get_all_cell_props",
     "load",
 ]

@@ -4,7 +4,6 @@ from .main import FOV
 from .load_nd2 import load_nd2
 from .load_tif import load_tif
 
-
 def load(
     source_path: Path,
     metadata_source: Path,

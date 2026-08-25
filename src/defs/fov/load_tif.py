@@ -7,6 +7,7 @@ from .metadata import (
     layers_from_meta,
     load_metadata,
 )
+from .util import find_labels
 
 
 def load_tif(tif_path: Path, metadata_source: Path) -> FOV:
@@ -16,7 +17,7 @@ def load_tif(tif_path: Path, metadata_source: Path) -> FOV:
     date = from_meta(meta, "date", str)
     layers = layers_from_meta(meta)
 
-    labels_path = tif_path.with_name(f"{tif_path.stem}_labels.png")
+    labels_path = find_labels(tif_path)
 
     labels_hash = file_hash(labels_path)
     tif_hash = file_hash(tif_path)

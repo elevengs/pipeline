@@ -1,4 +1,3 @@
-from dask.array.wrap import w
 import hashlib
 from dataclasses import dataclass
 from pathlib import Path
@@ -43,43 +42,46 @@ class Layer:
 
 @dataclass(frozen=True)
 class ImageDimensions:
-    x_microns: float
-    y_microns: float
-    x_pixels: int
-    y_pixels: int
+    microns: tuple[float, float]
+    pixels: tuple[int, int]
 
     @property
-    def x_microns_per_pixel(self) -> float:
-        return self.x_microns / self.x_pixels
+    def microns_per_pixel_by_dimension(self) -> tuple[float, float]:
+        return (
+            self.microns[0] / self.pixels[0], 
+            self.microns[1] / self.pixels[1]
+        )
 
     @property
-    def y_microns_per_pixel(self) -> float:
-        return self.y_microns / self.y_pixels
+    def microns_per_pixel(self) -> float:
+        scales = self.microns_per_pixel_by_dimension
+        if not np.isclose(scales[0], scales[1], rtol=1e-3):
+            raise ValueError(
+                "requires approximately square pixels, but "
+                f"has scales {scales[0]} and {scales[1]} microns per pixel"
+            )
+        return float(np.sqrt(scales[0] * scales[1]))
 
 @dataclass(frozen=True)
-class Region:
-    rowmin: int
-    colmin: int
-    rowmax: int
-    colmax: int
+class BoundingBox:
+    bounds: np.ndarray # shape (dimensions, 2)
 
-    def crop(self, target: np.ndarray):
-        return target[self.rowmin:self.rowmax, self.colmin:self.colmax]
+    def crop(self, target: np.ndarray) -> np.ndarray:
+        return target[
+            self.bounds[0, 0]:self.bounds[0, 1], 
+            self.bounds[1, 0]:self.bounds[1, 1]
+        ]
 
 ACCEPTED_CHANNEL_KINDS = ["phase", "fluor"]
 
 def calculate_FOV_id(labels_hash: str, source_hash: str) -> str:
     return str_hash(f"{source_hash}_{labels_hash}")
-    
-
 class FOV:
 
     id: str
 
     num_layers: int
 
-    dim_x_px: int
-    dim_y_px: int
     image_dimensions: ImageDimensions
 
     # lazy-load these because they're huge
@@ -136,8 +138,6 @@ class FOV:
         self.id = calculated_id
         
         self.num_layers = len(layers)
-        self.dim_y_px = image_dimensions.y_pixels
-        self.dim_x_px = image_dimensions.x_pixels
 
         for layer in layers:
             if layer.kind not in ACCEPTED_CHANNEL_KINDS:
@@ -159,7 +159,7 @@ class FOV:
 
     @property
     def data(self) -> np.ndarray:
-        if self.loaded_data:
+        if self._data is not None:
             return self._data
         else:
             suffix = self.source_path.suffix.lower()
@@ -168,9 +168,9 @@ class FOV:
             elif suffix in {".tif", ".tiff"}:
                 self.load_tif(self.source_path)
             else:
-                raise Exception("FOV source path does not end with .nd2 or .tif")
+                raise Exception("FOV source path does not end with .nd2, .tif, or .tiff")
 
-        return self._data
+        return self.data
 
     def load_tif(self, tif_path: Path):
         calculated_hash = file_hash(tif_path)
@@ -178,10 +178,9 @@ class FOV:
             raise Exception(f"source hash {calculated_hash} did not match expected hash {self.source_hash}")
         data = iio.imread(tif_path)
         if data.ndim == 3:
-            self.num_layers, self.dim_y_px, self.dim_x_px = data.shape
+            self.num_layers = data.shape[0]
         elif data.ndim == 2:
             self.num_layers = 1
-            self.dim_y_px, self.dim_x_px = data.shape
             data = data[np.newaxis, ...]
         else:
             raise Exception(
@@ -193,7 +192,7 @@ class FOV:
         self._data = data
         self.source_hash = calculated_hash
 
-        self._validate_dimensions()
+        self.validate_dimensions()
         return data
 
     def load_nd2(self, nd2_path: Path):
@@ -202,10 +201,9 @@ class FOV:
             raise Exception(f"source hash {calculated_hash} did not match expected hash {self.source_hash}")
         data = imread(nd2_path)
         if data.ndim == 3:
-            self.num_layers, self.dim_y_px, self.dim_x_px = data.shape
+            self.num_layers = data.shape[0]
         elif data.ndim == 2:
             self.num_layers = 1
-            self.dim_y_px, self.dim_x_px = data.shape
             data = data[np.newaxis, ...]
         else:
             raise Exception(
@@ -217,7 +215,7 @@ class FOV:
         self._data = data
         self.source_hash = calculated_hash
 
-        self._validate_dimensions()
+        self.validate_dimensions()
         return data
 
 
@@ -232,47 +230,51 @@ class FOV:
         self._labels = labels
         self.labels_hash = calculated_hash
 
-        self._validate_dimensions()
+        self.validate_dimensions()
         return labels
 
     @property
     def labels(self) -> np.ndarray:
-        if self.loaded_labels:
+        if self._labels is not None:
             return self._labels
         else:
             self.load_labels(self.labels_path)
 
-        return self._labels
+        return self.labels
 
-    def _validate_dimensions(self) -> None:
-        if self._data is None and self._labels is None:
-            return
-        if self._data is not None and self._labels is not None:
-            expected = self._data.shape[-2:]
-            if self._labels.shape != expected:
-                raise Exception(f"got label data of shape {self._labels.shape}, but expected {expected}")
-        shape = self._data.shape[-2:] if self._data is not None else self._labels.shape
-        if (self.image_dimensions.y_pixels, self.image_dimensions.x_pixels) != shape:
-            raise Exception(
-                "metadata specifies image dimensions of "
-                f"{self.image_dimensions.x_pixels} x {self.image_dimensions.y_pixels} px, "
-                f"but the image is {shape[1]} x {shape[0]} px"
-            )
+    def validate_dimensions(self) -> None:
+        expected = self.image_dimensions.pixels
 
-    # This method assumes there will only exactly one phase channel
+        def validate(actual: tuple[int, int], name: str):
+            if actual != expected:
+                raise Exception(
+                    "metadata specifies image dimensions of "
+                    f"(dimension 0: {expected[0]}, dimension 1: {expected[1]}) px, "
+                    f"but {name} is (dimension 0: {actual[0]}, dimension 1: {actual[1]}) px"
+                )
+
+        if self.loaded_data:
+            data_dimensions = self.data.shape[-2:]
+            validate(data_dimensions, "data")
+        if self.loaded_labels:
+            labels_dimensions = self.labels.shape
+            validate(labels_dimensions, "labels")
+
+    # This property assumes there will only exactly one phase channel
     # This condition is checked by init
+    @property
     def phase_index(
         self
     ) -> int:
         for layer in self.layers:
             if layer.kind == "phase":
                 return layer.index
-        return None
+        raise Exception("FOV.phase_index called, but no phase layer found")
 
     def phase_data(
         self
     ) -> np.ndarray:
-        return self.data[self.phase_index()]
+        return self.data[self.phase_index]
 
     def layer_data(
         self,

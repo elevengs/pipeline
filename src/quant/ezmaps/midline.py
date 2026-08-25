@@ -56,13 +56,12 @@ def midline(
     top_thetas = np.linspace(*[pole.theta for pole in poles], num = n)
     bottom_thetas = pole_a.theta - (top_thetas - pole_a.theta)
 
-    row_top, col_top = boundary_by_theta(top_thetas).T
-    row_bot, col_bot = boundary_by_theta(bottom_thetas).T
+    top_coordinates = boundary_by_theta(top_thetas)
+    bottom_coordinates = boundary_by_theta(bottom_thetas)
 
     # Take the midpoint of the line segment connecting the
     # points on each half, as shown in my beautiful diagram above
-    row_mid = (row_top + row_bot) / 2
-    col_mid = (col_top + col_bot) / 2
+    midline_coordinates = (top_coordinates + bottom_coordinates) / 2
 
     # Find the distances between the points
     # after cumulative summation, this represents the arc length
@@ -70,8 +69,7 @@ def midline(
     midline_al = [0,
         *np.cumsum(
             np.sqrt(
-                np.square(np.diff(row_mid)) +
-                np.square(np.diff(col_mid))
+                np.sum(np.square(np.diff(midline_coordinates, axis=0)), axis=1)
             )
         )
     ]
@@ -83,7 +81,7 @@ def midline(
     # the points we do have are considered exact
     mid_spline = make_interp_spline(
         midline_al,
-        np.c_[row_mid, col_mid]
+        midline_coordinates
     )
 
     # In order to locate foci that are past the poles of the cell,
@@ -132,7 +130,7 @@ def midline(
 
     extended_points = np.r_[
         lower_points,
-        np.c_[row_mid, col_mid],
+        midline_coordinates,
         upper_points
     ]
 

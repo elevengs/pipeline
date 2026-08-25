@@ -52,17 +52,12 @@ def fit_boundary(
             for pt in boundary_pts
     ]
 
-    sorted_theta, sorted_row, sorted_col = list(
+    sorted_theta, sorted_coordinates = list(
         # zip(*_) is the inverse of zip(_)
         # so this is zip -> sort by angle -> unzip
         zip(
             *sorted(
-                zip(
-                    theta,
-                    boundary_pts[:, 0],
-
-                    boundary_pts[:, 1]
-                ),
+                zip(theta, boundary_pts),
                 key = lambda x: x[0]
             )
         )
@@ -71,12 +66,11 @@ def fit_boundary(
     # Remove non-ascending theta values
     # SciPy gets mad when you try to fit
     # a spline with non-ascending x values
-    asc_theta, asc_row, asc_col = ([], [], [])
+    asc_theta, asc_coordinates = ([], [])
     for i in range(len(sorted_theta)):         
         if len(asc_theta) == 0 or sorted_theta[i] > asc_theta[len(asc_theta) - 1]:
             asc_theta.append(sorted_theta[i])
-            asc_row.append(sorted_row[i])
-            asc_col.append(sorted_col[i])
+            asc_coordinates.append(sorted_coordinates[i])
 
     # Repeat the sequence on either side so it is periodic
     # This helps the spline fit at the endpoints (-pi, +pi) more accurately
@@ -85,15 +79,14 @@ def fit_boundary(
         *asc_theta,
         *[theta + 2 * np.pi for theta in asc_theta],
     ]
-    asc_row = [*asc_row, *asc_row, *asc_row]
-    asc_col = [*asc_col, *asc_col, *asc_col]
+    asc_coordinates = [*asc_coordinates, *asc_coordinates, *asc_coordinates]
 
     # Fit the outline of the cell by theta
     # This will allow you to query an angle (say, 90 degrees)
     # and find what point on the outline of the cell falls at that angle
     boundary_by_theta = make_smoothing_spline(
         asc_theta,
-        np.c_[asc_row, asc_col],
+        np.asarray(asc_coordinates),
         # this value is smoothing
         # increase to get a smoother spline at the potential
         # expense of accuracy
@@ -106,7 +99,7 @@ def fit_boundary(
     # There must be an odd number of points so that there is a middle value
     use_n_theta_samples = n_theta_samples if n_theta_samples % 2 == 1 else n_theta_samples + 1
     theta_new = np.linspace(- 3 * np.pi, 3 * np.pi, num = use_n_theta_samples)
-    row_new, col_new = boundary_by_theta(theta_new).T
+    coordinates_new = boundary_by_theta(theta_new)
 
     # Prepend 0 so that this has the same length as phi_new
     # otherwise, with np.diff it would be 1 shorter.
@@ -114,8 +107,7 @@ def fit_boundary(
     # has a cumulative arc length of zero, not some positive number.
     arc_length = [0, *np.cumsum(
         np.sqrt(
-            np.square(np.diff(row_new)) +
-            np.square(np.diff(col_new))
+            np.sum(np.square(np.diff(coordinates_new, axis=0)), axis=1)
         )
     )]
 
@@ -130,7 +122,7 @@ def fit_boundary(
     # inferences about the values in between
     boundary_by_arc_length = make_interp_spline(
         arc_length,
-        np.c_[row_new, col_new]
+        coordinates_new
     )
 
     return boundary_by_theta, boundary_by_arc_length, perimeter

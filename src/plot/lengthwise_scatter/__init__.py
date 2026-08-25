@@ -2,7 +2,7 @@ from .main import (
     DEFAULT_CELL_LENGTH_KEY,
     DEFAULT_POSITION_KEY,
     colorbar,
-    plot_volcano,
+    plot_lengthwise_scatter,
 )
 from .intensity import scatter_intensity
 from .kde import scatter_kde_colors
@@ -11,7 +11,7 @@ __all__ = [
     "DEFAULT_CELL_LENGTH_KEY",
     "DEFAULT_POSITION_KEY",
     "colorbar",
-    "plot_volcano",
+    "plot_lengthwise_scatter",
     "scatter_intensity",
     "scatter_kde_colors",
     "scatter_num_foci",

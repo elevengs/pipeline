@@ -41,19 +41,9 @@ class Focus:
     def layer(self):
         return self.cell_layer.layer
 
-    def microns_per_pixel(self) -> float:
-        x_scale = self.cell.fov.image_dimensions.x_microns_per_pixel
-        y_scale = self.cell.fov.image_dimensions.y_microns_per_pixel
-        if not np.isclose(x_scale, y_scale, rtol=1e-3):
-            raise ValueError(
-                "map requires approximately square pixels, but "
-                f"{self.cell.fov.source_path} has scales {x_scale} and {y_scale} microns per pixel"
-            )
-        return float(np.sqrt(x_scale * y_scale))
-
     @property
     def midline_position_um(self):
-        return self.cell_point.midline_position_px * self.microns_per_pixel()
+        return self.cell_point.midline_position_px * self.fov.image_dimensions.microns_per_pixel
     
     @property
     def midline_position_pol_um(self):
@@ -65,11 +55,11 @@ class Focus:
 
     @property
     def offset_from_midline_um(self):
-        return self.cell_point.offset_from_midline_px * self.microns_per_pixel()
+        return self.cell_point.offset_from_midline_px * self.fov.image_dimensions.microns_per_pixel
 
     @property
     def cell_midline_length_um(self):
-        return self.cell.map.midline_length * self.microns_per_pixel()
+        return self.cell.map.midline_length * self.fov.image_dimensions.microns_per_pixel
 
     def csv_columns():
         return [
@@ -80,6 +70,7 @@ class Focus:
             ("FOV::DIR", lambda x: x.cell.fov.dir_str()),
             ("FOV::GROUP", lambda x: x.cell.fov.group),
             ("FOV::DATE", lambda x: x.fov.date),
+            ("FOV::MICRONS_PER_PIXEL", lambda x: x.fov.image_dimensions.microns_per_pixel),
             ("CELL_LAYER::PROPS::NUM_FOCI", lambda x: getattr(x.cell_layer.props, "num_foci", np.nan)),
             ("LAYER::INDEX", lambda x: x.layer.index),
             ("LAYER::CHANNEL_NAME", lambda x: x.channel.name),

@@ -51,13 +51,12 @@ def find_estimated_poles(
     # Generate points around half of the perimeter and find their opposites
     als = np.linspace(0, perimeter / 2, num = n)
     ops = [opposite(x) for x in als]
-    row_1, col_1 = boundary_by_arc_length(als).T
-    row_2, col_2 = boundary_by_arc_length(ops).T
+    coordinates_1 = boundary_by_arc_length(als)
+    coordinates_2 = boundary_by_arc_length(ops)
 
     # Calculate the distances between the two potential poles
     dist = np.sqrt(
-        np.square(row_1 - row_2)
-        + np.square(col_1 - col_2)
+        np.sum(np.square(coordinates_1 - coordinates_2), axis=1)
     )
 
     # The poles will theoretically have the greatest straight-line distance
@@ -66,9 +65,9 @@ def find_estimated_poles(
 
     # We want the lowest arc length pole first for convenience
     pole_als = sorted([als[max_idx], ops[max_idx]])
-    pole_row, pole_col = boundary_by_arc_length(pole_als).T
+    pole_coordinates = boundary_by_arc_length(pole_als)
 
-    pole_thetas = np.atan2(pole_col - centroid[1], pole_row - centroid[0])
+    pole_thetas = np.atan2(pole_coordinates[:, 1] - centroid[1], pole_coordinates[:, 0] - centroid[0])
 
     return [
         BoundaryPoint(
@@ -129,8 +128,8 @@ def find_true_poles(
 
         boundary_al, midline_al = result.x
         boundary_al = boundary_al % perimeter
-        row, col = boundary_by_arc_length(boundary_al)
-        theta = np.atan2(col - centroid[1], row - centroid[0])
+        point = boundary_by_arc_length(boundary_al)
+        theta = np.atan2(point[1] - centroid[1], point[0] - centroid[0])
 
         return BoundaryPoint(
             arc_length = float(boundary_al),

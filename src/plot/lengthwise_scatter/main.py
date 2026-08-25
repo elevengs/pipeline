@@ -17,7 +17,7 @@ def colorbar(ax, cmap, norm):
     return plt.colorbar(sm, cax=cax)
     
 
-def plot_volcano(
+def plot_lengthwise_scatter(
     foci_df_seq,
     min_plot_len=0.8,
     max_plot_len=2.1,

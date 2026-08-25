@@ -5,13 +5,13 @@ from .centroid import centroid
 from .boundary import boundary_points, fit_boundary
 from .pole import find_estimated_poles, find_true_poles, BoundaryPoint
 from .midline import midline
-from src.defs.fov import Region
+from src.defs.fov import BoundingBox
 
 class CellMap:
 
     mask: np.ndarray
     # What region of the FOV does the mask cover?
-    region: Region 
+    bounding_box: BoundingBox
 
     centroid: np.ndarray
 
@@ -25,9 +25,9 @@ class CellMap:
     midline_by_arc_length: BSpline
     midline_length: float
 
-    def __init__(self, region, mask):
+    def __init__(self, bounding_box, mask):
         self.mask = mask
-        self.region = region
+        self.bounding_box = bounding_box
 
         self.centroid = centroid(mask)
 
@@ -89,11 +89,8 @@ class CellMap:
 
         points, projection_points = self._cell_point_coordinates(cell_points)
 
-        point_rows, point_cols = points.T
-        projection_rows, projection_cols = projection_points.T
-
-        ax.plot(point_cols, point_rows, "bo")
-        ax.plot(projection_cols, projection_rows, "mo")
+        ax.plot(points[:, 1], points[:, 0], "bo")
+        ax.plot(projection_points[:, 1], projection_points[:, 0], "mo")
 
         for point, projection_point in zip(points, projection_points):
             ax.plot(
@@ -112,31 +109,31 @@ class CellMap:
         ax.imshow(self.mask)
 
         boundary_als = np.linspace(0, self.perimeter, num = 300)
-        boundary_row, boundary_col = self.boundary_by_arc_length(boundary_als).T
-        ax.plot(boundary_col, boundary_row, linewidth = 1)
+        boundary_points = self.boundary_by_arc_length(boundary_als)
+        ax.plot(boundary_points[:, 1], boundary_points[:, 0], linewidth = 1)
 
         estimated_pole_als = [pole.arc_length for pole in self.estimated_poles]
-        estimated_pole_row, estimated_pole_col = self.boundary_by_arc_length(estimated_pole_als).T
-        ax.plot(estimated_pole_col, estimated_pole_row, "rx")
+        estimated_pole_points = self.boundary_by_arc_length(estimated_pole_als)
+        ax.plot(estimated_pole_points[:, 1], estimated_pole_points[:, 0], "rx")
 
         true_pole_als = [pole.arc_length for pole in self.true_poles]
-        true_pole_row, true_pole_col = self.boundary_by_arc_length(true_pole_als).T
-        ax.plot(true_pole_col, true_pole_row, "ro")
+        true_pole_points = self.boundary_by_arc_length(true_pole_als)
+        ax.plot(true_pole_points[:, 1], true_pole_points[:, 0], "ro")
 
         midline_start = -self.midline_length / 2
         midline_end = self.midline_length / 2
 
         midline_als = np.linspace(midline_start, midline_end, num = 200)
-        midline_row, midline_col = self.midline_by_arc_length(midline_als).T
-        ax.plot(midline_col, midline_row, color = "tab:green")
+        midline_points = self.midline_by_arc_length(midline_als)
+        ax.plot(midline_points[:, 1], midline_points[:, 0], color = "tab:green")
 
         lower_midline_als = np.linspace(midline_start - extend_midline_by, midline_start, num = 50)
-        lower_midline_row, lower_midline_col = self.midline_by_arc_length(lower_midline_als).T
-        ax.plot(lower_midline_col, lower_midline_row, color = "tab:orange")
+        lower_midline_points = self.midline_by_arc_length(lower_midline_als)
+        ax.plot(lower_midline_points[:, 1], lower_midline_points[:, 0], color = "tab:orange")
 
         upper_midline_als = np.linspace(midline_end, midline_end + extend_midline_by, num = 50)
-        upper_midline_row, upper_midline_col = self.midline_by_arc_length(upper_midline_als).T
-        ax.plot(upper_midline_col, upper_midline_row, color = "tab:orange")
+        upper_midline_points = self.midline_by_arc_length(upper_midline_als)
+        ax.plot(upper_midline_points[:, 1], upper_midline_points[:, 0], color = "tab:orange")
 
         if cell_points is not None:
             self._plot_cell_points(ax, cell_points)

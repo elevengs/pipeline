@@ -17,7 +17,7 @@ def plot_detected_foci(
     dest: Path,
 ):
     fov = cell.fov
-    crop = cell.map.region.crop
+    crop = cell.map.bounding_box.crop
 
     thresholded_fluor_final = fluor_layer_data.fluor_final * (
         fluor_layer_data.fluor_final > fluor_layer_data.detection_threshold
@@ -56,8 +56,9 @@ def plot_detected_foci(
             axes[i].imshow(crop(x))
 
         for _, focus in enumerate(foci):
-            y, x, r = focus.props.y, focus.props.x, focus.props.radius
-            c = plt.Circle((x, y), r, linewidth=2, fill=False, color="red")
+            coordinate = focus.props.coordinate
+            center = (coordinate[1], coordinate[0])
+            c = plt.Circle(center, focus.props.radius, linewidth=2, fill=False, color="red")
             axes[SHOW_BLOBS_ON_IDX].add_patch(c)
 
         cell.map.show(

@@ -1,15 +1,14 @@
+from typing import Iterable
 import matplotlib.pyplot as plt
 import numpy as np
 
-DEFAULT_CELL_LENGTH_KEY = "CELL::PROPS::AXIS_MAJOR_LENGTH"
-
-def plot_cell_length(cells_df, cell_length_key=DEFAULT_CELL_LENGTH_KEY):
+def plot_cell_length(lengths: Iterable[float]):
     min_len_um = 0
     max_len_um = 3
     num_bins = 50
 
     h_cell_lengths, bin_edges = np.histogram(
-        cells_df[cell_length_key], bins=np.linspace(min_len_um, max_len_um, num_bins)
+        list(lengths), bins=np.linspace(min_len_um, max_len_um, num_bins)
     )
 
     fig, ax = plt.subplots(1, 1, figsize=(3.8, 3))

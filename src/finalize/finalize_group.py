@@ -1,31 +1,13 @@
-from dataclasses import dataclass
 from pathlib import Path
 
 from src.defs import load
 from src.plot.save import (
     save_all_plots,
-    save_all_spideymaps_plots,
     save_cell_length_plot,
 )
-from src.spideymaps.make_atlas import (
-    channel_output_dir,
-    channel_output_dir_for_name,
-    make_atlas_coords,
-)
-
+from src.spideymaps.save import finalize_spideymaps
+from .inventory_from_csvs import batch_inventory_from_CSVs
 from .make_final_dfs import make_final_dfs
-
-@dataclass(frozen=True)
-class SpideymapsOptions:
-    """Inputs required by the existing Spideymaps atlas API.
-    """
-
-    root: Path
-    cells_dir: Path
-    cell_layers_dir: Path
-    foci_dir: Path
-    out: Path
-    max_workers: int
 
 
 def group_output_dir(out: Path, group: str) -> Path:
@@ -57,46 +39,41 @@ def make_group_outputs(
 ) -> None:
     """Returns nothing, but creates finalized outputs for one metadata-defined group.
     """
-    cells_df, cell_layers_df, foci_by_channel = make_final_dfs(
+
+    cells, cell_layers, foci = batch_inventory_from_CSVs(
         sources,
         root,
         cells_dir,
         cell_layers_dir,
         foci_dir,
+        max_workers
+    )
+
+    cells_df, cell_layers_df, foci_by_channel = make_final_dfs(
+        cells,
+        cell_layers,
+        foci,
         out,
         min_bio_reps,
         max_workers,
     )
-    save_cell_length_plot(cells_df, out)
+
+    save_cell_length_plot(cells_df["CELL::PROPS::AXIS_MAJOR_LENGTH"], out)
 
     for channel_name, foci_df in foci_by_channel.items():
-        channel_out = channel_output_dir_for_name(out, channel_name)
-        channel_cell_layers_df = cell_layers_df[
-            cell_layers_df["LAYER::CHANNEL_NAME"] == channel_name
-        ]
+        channel_out = out / channel_name
+        channel_cell_layers_df = cell_layers_df[cell_layers_df["LAYER::CHANNEL_NAME"] == channel_name]
         save_all_plots(cells_df, channel_cell_layers_df, foci_df, channel_out)
 
     if not enable_spideymaps:
         return
 
     spideymaps_out = out / "spideymaps"
-    options = SpideymapsOptions(
-        root=root,
-        cells_dir=cells_dir,
-        cell_layers_dir=cell_layers_dir,
-        foci_dir=foci_dir,
-        out=spideymaps_out,
-        max_workers=max_workers,
+
+    finalize_spideymaps(
+        cells,
+        cell_layers,
+        foci,
+        cell_layers_df,
+        spideymaps_out,
     )
-    coords_by_channel = make_atlas_coords(sources, options)
-    for channel, coords in coords_by_channel.items():
-        channel_out = channel_output_dir(spideymaps_out, channel)
-        channel_cell_layers_df = cell_layers_df[
-            cell_layers_df["LAYER::CHANNEL_NAME"] == channel.name
-        ]
-        save_all_spideymaps_plots(
-            cells_df,
-            channel_cell_layers_df,
-            coords,
-            channel_out,
-        )

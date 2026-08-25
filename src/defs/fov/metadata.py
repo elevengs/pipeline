@@ -109,18 +109,25 @@ def layers_from_meta(meta: dict) -> list[Layer]:
 def image_dimensions_from_meta(meta: dict) -> ImageDimensions:
     dimensions = from_meta(meta, "image_dimensions", dict)
 
-    values: dict[str, Any] = {}
-    for axis in ("x", "y"):
-        axis_dimensions = from_meta(dimensions, axis, dict)
-        microns = axis_dimensions.get("microns")
-        pixels = axis_dimensions.get("pixels")
+    values: list[dict[str, Any]] = []
+    for axis, dimension in dimensions.items():
+        dimension_values = dimension
+        if not isinstance(dimension_values, dict):
+            raise ValueError("metadata image_dimensions values must be dictionaries")
+        microns = dimension_values.get("microns")
+        pixels = dimension_values.get("pixels")
 
         if isinstance(microns, bool) or not isinstance(microns, (int, float)) or microns <= 0:
             raise ValueError(f"metadata image_dimensions.{axis}.microns must be positive")
         if isinstance(pixels, bool) or not isinstance(pixels, int) or pixels <= 0:
             raise ValueError(f"metadata image_dimensions.{axis}.pixels must be positive")
 
-        values[f"{axis}_microns"] = float(microns)
-        values[f"{axis}_pixels"] = int(pixels)
+        values.append({"microns": float(microns), "pixels": int(pixels)})
 
-    return ImageDimensions(**values)
+    if len(values) != 2:
+        raise ValueError("metadata image_dimensions must contain exactly two dimensions")
+
+    return ImageDimensions(
+        microns=tuple(value["microns"] for value in reversed(values)),
+        pixels=tuple(value["pixels"] for value in reversed(values)),
+    )

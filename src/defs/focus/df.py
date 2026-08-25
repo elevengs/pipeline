@@ -4,7 +4,7 @@ import pandas as pd
 
 from src.quant.ezmaps import CellPoint
 from ..cell_layer import CellLayer
-from ..records import objects_to_dataframe
+from ..records import objects_to_dataframe, row_to_properties
 from .main import Focus
 
 
@@ -56,11 +56,7 @@ def foci_from_dataframe(
 
         focus = Focus(cell_layer, int(row["FOCUS::INDEX"]), cell_point)
 
-        for column, value in row.items():
-            prefix = "FOCUS::PROPS::"
-            if not column.startswith(prefix) or pd.isna(value):
-                continue
-            setattr(focus.props, column.removeprefix(prefix).lower(), value)
+        focus.props = row_to_properties(row, "FOCUS::PROPS::")
 
         row_focus_id = row["FOCUS::ID"]
 

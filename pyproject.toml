@@ -28,10 +28,15 @@ environments = [
   "sys_platform == 'darwin' or sys_platform == 'linux'"
 ]
 
+[tool.ruff]
+exclude = [
+  "src/spideymaps/spideymaps_v2/**",
+]
+
 [tool.ty.src]
 include = ["src"]
 exclude = [
-    "src/spideymaps/**",
+    "src/spideymaps/spideymaps_v2/**",
 ]
 
 [tool.ty.environment]

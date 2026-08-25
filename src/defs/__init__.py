@@ -6,7 +6,7 @@ from .cell_layer import (
     cell_layers_to_dataframe,
 )
 from .focus import Focus, foci_from_csv, foci_from_dataframe, foci_to_dataframe
-from .fov import Channel, FOV, ImageDimensions, Layer, Region, load
+from .fov import BoundingBox, Channel, FOV, ImageDimensions, Layer, load
 
 __all__ = [
     "Channel",
@@ -16,7 +16,7 @@ __all__ = [
     "Focus",
     "ImageDimensions",
     "Layer",
-    "Region",
+    "BoundingBox",
     "load",
     "cells_from_csv",
     "cells_from_dataframe",

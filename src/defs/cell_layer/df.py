@@ -1,10 +1,9 @@
-from types import SimpleNamespace
 from pathlib import Path
 
 import pandas as pd
 
 from ..cell import Cell
-from ..records import objects_to_dataframe
+from ..records import objects_to_dataframe, row_to_properties
 from .main import CellLayer, index_by_id
 
 
@@ -49,13 +48,7 @@ def cell_layers_from_dataframe(
         cell_layer = CellLayer(
             cell,
             layer,
-            SimpleNamespace(
-                **{
-                    column.removeprefix("CELL_LAYER::PROPS::").lower(): value
-                    for column, value in row.items()
-                    if column.startswith("CELL_LAYER::PROPS::") and not pd.isna(value)
-                }
-            ),
+            props = row_to_properties(row, "CELL_LAYER::PROPS::")
         )
         row_id = str(row["CELL_LAYER::ID"])
         if row_id != cell_layer.id:

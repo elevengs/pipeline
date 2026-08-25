@@ -5,24 +5,39 @@ from matplotlib.colors import Normalize
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-
 from matplotlib_scalebar.scalebar import ScaleBar
-grid_params = dict(
-    radius=6,
-    n_shells=5,
-    n_cols=5,
-    n_phi=(1, 3, 5, 5, 5),
-    level=0,
-)
+from ..map import grid_params
+from .calc import get_rep, make_plot_labels
+from ..make_atlas import atlas_cell_lengths_um
+from src.defs import Channel
+from src.spideymaps.spideymaps_v2 import SpideyAtlas
 
-def plot_spideymaps(
-    atlas,
-    rep_cells,
-    rep_cell_lengths,
-    plot_labels,
-    microns_per_pixel,
+def plot_rep_cells(
+    channel: Channel,
+    atlas: SpideyAtlas,
     cmap=sns.color_palette("plasma", as_cmap=True),
 ):
+    cell_lengths_um = np.asarray(atlas_cell_lengths_um(atlas))
+
+    # Put cells into roughly four equally populated length ranges.
+    quartiles = np.percentile(cell_lengths_um, [0.0, 25.0, 50.0, 75.0, 100.0])
+    length_ranges = tuple(zip(quartiles[:-1], quartiles[1:]))
+
+    pixel_sizes_um = np.array([
+        spideymap.microns_per_pixel for spideymap in atlas.maps.values()
+    ])
+    if not np.allclose(pixel_sizes_um, pixel_sizes_um[0], rtol=1e-3):
+        raise ValueError(
+            f'all FOVs for channel "{channel.name}" must have the same pixel size'
+        )
+
+    microns_per_pixel = float(pixel_sizes_um.mean())
+
+    plot_labels = make_plot_labels(atlas, length_ranges, microns_per_pixel)
+    rep_cell_lengths, rep_cells = get_rep(
+        length_ranges, cell_lengths_um, microns_per_pixel
+    )
+
     vmin = 0
     vmax = 3
 
@@ -36,6 +51,7 @@ def plot_spideymaps(
     fig_maps, axs = plt.subplots(
         len(plot_labels), 1, figsize=(7, 7 * len(plot_labels) * (ylim[1] / xlim[1]))
     )
+    axs = np.atleast_1d(axs)
     sm = ScalarMappable(norm=Normalize(vmin=vmin, vmax=vmax, clip=True), cmap=cmap)
 
     for i, (rep_cell, plot_label) in enumerate(zip(rep_cells, plot_labels)):
@@ -48,15 +64,15 @@ def plot_spideymaps(
                 np.array(rep_cell.polygons[key].boundary.xy[1], dtype="float")
                 * microns_per_pixel
             )
-            density = 0
+            density = 0.0
             try:
-                density = atlas.data[plot_label].to_dict()[key]
+                density = float(atlas.data[plot_label].to_dict()[key])
             except Exception as _:
                 pass
             axs[i].fill(
                 x,
                 y,
-                facecolor=sm.to_rgba(density),  # scalar mappable
+                facecolor=sm.to_rgba(np.asarray(density)),  # scalar mappable
                 edgecolor="none",
                 linewidth=0,
             )
@@ -90,7 +106,7 @@ def plot_spideymaps(
 
     # Create a new axes for the colorbar
     cbar_ax = fig_maps.add_axes(
-        [0.92, 0.15, 0.02, 0.7]
+        (0.92, 0.15, 0.02, 0.7)
     )  # [left, bottom, width, height]
     cb = plt.colorbar(mappable=sm, cax=cbar_ax)
     # cb.outline.set_visible(False)

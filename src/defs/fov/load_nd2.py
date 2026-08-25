@@ -4,6 +4,8 @@ from nd2 import ND2File
 
 from .main import Channel, FOV, ImageDimensions, Layer, calculate_FOV_id, file_hash
 from .metadata import from_meta, layers_from_meta, load_metadata
+from .util import find_labels
+
 
 def layers_from_nd2(f: ND2File) -> list[Layer]:
 
@@ -43,40 +45,30 @@ def image_dimensions_from_nd2(f: ND2File) -> ImageDimensions:
     if f.metadata.channels is None:
         raise Exception(f"metadata for nd2 file at {f.path} is missing the channels attribute")
 
-    res = None
+    dim = None
+    cal = None
 
     for channel_meta in f.metadata.channels:
-        new_row_dim, new_col_dim, _ = channel_meta.volume.voxelCount
-        new_row_ax_cal, new_col_ax_cal, _ = channel_meta.volume.axesCalibration
 
-        new_res: dict[str, int | float]= {
-            "row_dim": new_row_dim,
-            "col_dim": new_col_dim,
-            "row_ax_cal": new_row_ax_cal,
-            "col_ax_cal": new_col_ax_cal
-        }
+        dim_0, dim_1 = channel_meta.volume.voxelCount[:2]
+        cal_0, cal_1 = channel_meta.volume.axesCalibration[:2]
+        new_dim = (int(dim_0), int(dim_1))
+        new_cal = (float(cal_0), float(cal_1))
 
-        if res is None:
-            res = new_res
-        elif res != new_res:
+        if dim is None:
+            dim = new_dim
+            cal = new_cal
+        elif dim != new_dim:
             raise Exception(f"metadata for nd2 file at {f.path} has different dimensions for different channels; this is not permitted")
+        elif cal != new_cal:
+            raise Exception(f"metadata for nd2 file at {f.path} has different calibration ratios for different channels; this is not permitted")
     
-    if res is None:
-        raise Exception(f"metadata for nd2 file at {f.path} has no channelwise dimension data")
-
-    if res["row_ax_cal"] != res["col_ax_cal"]:
-        raise Exception(f"row and column calibration values differ in a channel in nd2 file at {f.path}; this is not allowed")
-
-    rows = int(res["row_dim"])
-    cols = int(res["col_dim"])
-    row_ax_cal = res["row_ax_cal"]
-    col_ax_cal = res["col_ax_cal"]
+    if dim is None or cal is None:
+        raise Exception(f"metadata for nd2 file at {f.path} has insufficient channelwise dimension data")
 
     return ImageDimensions(
-        x_microns = rows * row_ax_cal,
-        y_microns = cols * col_ax_cal,
-        x_pixels = rows,
-        y_pixels = cols
+        pixels = (dim[1], dim[0]),
+        microns = (dim[1] * cal[1], dim[0] * cal[0])
     )
 
 def date_from_nd2(f: ND2File) -> str:
@@ -88,7 +80,7 @@ def load_nd2(nd2_path: Path, metadata_source: Path) -> FOV:
 
     meta, fov_root = load_metadata(nd2_path, metadata_source)
     group = from_meta(meta, "group", str)
-    labels_path = nd2_path.with_name(f"{nd2_path.stem}_labels.png")
+    labels_path = find_labels(nd2_path)
     meta_layers = layers_from_meta(meta)
 
     labels_hash = file_hash(labels_path)
