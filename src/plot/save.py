@@ -42,7 +42,9 @@ def save_foci_plots(
     mkdir_p(save_folder)
     save_fig(fig_cano, save_folder.joinpath("long_axis_position_vs_cell_length"))
     save_fig(fig_foci, save_folder.joinpath("long_axis_position_vs_foci_number"))
-    save_fig(fig_intensity, save_folder.joinpath("long_axis_position_vs_foci_intensity"))
+    save_fig(
+        fig_intensity, save_folder.joinpath("long_axis_position_vs_foci_intensity")
+    )
     save_fig(fig_num_foci, save_folder.joinpath("num_foci"))
 
     plt.close(fig_cano)
@@ -56,6 +58,7 @@ def save_cell_length_plot(lengths, out):
     mkdir_p(out)
     save_fig(fig, out.joinpath("cell_length"))
     plt.close(fig)
+
 
 def save_all_plots(
     cells_df,

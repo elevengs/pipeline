@@ -8,8 +8,7 @@ def handle_sources_with(
     fn: Callable[[Path], object],
     max_workers: int,
 ) -> Iterator[tuple[Path, object]]:
-    """Process ``sources`` using ``fn``, using either a thread pool if ``max_workers > 0`` or a simple loop otherwise.
-    """
+    """Process ``sources`` using ``fn``, using either a thread pool if ``max_workers > 0`` or a simple loop otherwise."""
     sources = list(sources)
     if max_workers == 0:
         for source in sources:

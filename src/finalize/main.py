@@ -7,6 +7,7 @@ from src.util.incl_excl import select_files
 
 from .finalize_group import group_output_dir, make_group_outputs, sources_by_group
 
+
 def finalize(
     root: Path,
     include: list[str],

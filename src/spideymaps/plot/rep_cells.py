@@ -12,6 +12,7 @@ from ..make_atlas import atlas_cell_lengths_um
 from src.defs import Channel
 from src.spideymaps.spideymaps_v2 import SpideyAtlas
 
+
 def plot_rep_cells(
     channel: Channel,
     atlas: SpideyAtlas,
@@ -23,9 +24,9 @@ def plot_rep_cells(
     quartiles = np.percentile(cell_lengths_um, [0.0, 25.0, 50.0, 75.0, 100.0])
     length_ranges = tuple(zip(quartiles[:-1], quartiles[1:]))
 
-    pixel_sizes_um = np.array([
-        spideymap.microns_per_pixel for spideymap in atlas.maps.values()
-    ])
+    pixel_sizes_um = np.array(
+        [spideymap.coords["microns_per_pixel"] for spideymap in atlas.maps.values()]
+    )
     if not np.allclose(pixel_sizes_um, pixel_sizes_um[0], rtol=1e-3):
         raise ValueError(
             f'all FOVs for channel "{channel.name}" must have the same pixel size'

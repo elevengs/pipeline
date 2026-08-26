@@ -58,7 +58,9 @@ def plot_detected_foci(
         for _, focus in enumerate(foci):
             coordinate = focus.props.coordinate
             center = (coordinate[1], coordinate[0])
-            c = plt.Circle(center, focus.props.radius, linewidth=2, fill=False, color="red")
+            c = plt.Circle(  # type: ignore (bug)
+                center, focus.props.radius, linewidth=2, fill=False, color="red"
+            )
             axes[SHOW_BLOBS_ON_IDX].add_patch(c)
 
         cell.map.show(

@@ -1,8 +1,9 @@
 from pathlib import Path
 
-from .main import FOV
 from .load_nd2 import load_nd2
 from .load_tif import load_tif
+from .main import FOV
+
 
 def load(
     source_path: Path,

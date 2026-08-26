@@ -2,7 +2,7 @@ from pathlib import Path
 
 from nd2 import ND2File
 
-from .main import Channel, FOV, ImageDimensions, Layer, calculate_FOV_id, file_hash
+from .main import FOV, Channel, ImageDimensions, Layer, calculate_FOV_id, file_hash
 from .metadata import from_meta, layers_from_meta, load_metadata
 from .util import find_labels
 
@@ -10,7 +10,9 @@ from .util import find_labels
 def layers_from_nd2(f: ND2File) -> list[Layer]:
 
     if f.metadata.channels is None:
-        raise Exception(f"metadata for nd2 file at {f.path} is missing the channels attribute")
+        raise Exception(
+            f"metadata for nd2 file at {f.path} is missing the channels attribute"
+        )
 
     layers = []
 
@@ -21,35 +23,34 @@ def layers_from_nd2(f: ND2File) -> list[Layer]:
             kind = "phase"
         elif "fluorescence" in channel_meta.microscope.modalityFlags:
             kind = "fluor"
-            
+
         if kind is None:
-            raise Exception(f"metadata for nd2 file at {f.path} - channel modalityFlags contains neither 'brightfield' nor 'fluorescence'")
-        
+            raise Exception(
+                f"metadata for nd2 file at {f.path} - channel modalityFlags contains neither 'brightfield' nor 'fluorescence'"
+            )
+
         channel = Channel(
-            name = "phase" if kind == "phase" else channel_meta.channel.name,
-            kind = kind
+            name="phase" if kind == "phase" else channel_meta.channel.name, kind=kind
         )
 
-        layer = Layer(
-            channel = channel,
-            index = channel_meta.channel.index
-        )
+        layer = Layer(channel=channel, index=channel_meta.channel.index)
 
         layers.append(layer)
 
     return layers
-    
+
 
 def image_dimensions_from_nd2(f: ND2File) -> ImageDimensions:
 
     if f.metadata.channels is None:
-        raise Exception(f"metadata for nd2 file at {f.path} is missing the channels attribute")
+        raise Exception(
+            f"metadata for nd2 file at {f.path} is missing the channels attribute"
+        )
 
     dim = None
     cal = None
 
     for channel_meta in f.metadata.channels:
-
         dim_0, dim_1 = channel_meta.volume.voxelCount[:2]
         cal_0, cal_1 = channel_meta.volume.axesCalibration[:2]
         new_dim = (int(dim_0), int(dim_1))
@@ -59,22 +60,29 @@ def image_dimensions_from_nd2(f: ND2File) -> ImageDimensions:
             dim = new_dim
             cal = new_cal
         elif dim != new_dim:
-            raise Exception(f"metadata for nd2 file at {f.path} has different dimensions for different channels; this is not permitted")
+            raise Exception(
+                f"metadata for nd2 file at {f.path} has different dimensions for different channels; this is not permitted"
+            )
         elif cal != new_cal:
-            raise Exception(f"metadata for nd2 file at {f.path} has different calibration ratios for different channels; this is not permitted")
-    
+            raise Exception(
+                f"metadata for nd2 file at {f.path} has different calibration ratios for different channels; this is not permitted"
+            )
+
     if dim is None or cal is None:
-        raise Exception(f"metadata for nd2 file at {f.path} has insufficient channelwise dimension data")
+        raise Exception(
+            f"metadata for nd2 file at {f.path} has insufficient channelwise dimension data"
+        )
 
     return ImageDimensions(
-        pixels = (dim[1], dim[0]),
-        microns = (dim[1] * cal[1], dim[0] * cal[0])
+        pixels=(dim[1], dim[0]), microns=(dim[1] * cal[1], dim[0] * cal[0])
     )
 
-def date_from_nd2(f: ND2File) -> str:
-    timestamp = f.text_info["date"]
 
-    return timestamp.split(sep = " ")[0]
+def date_from_nd2(f: ND2File) -> str:
+    timestamp = f.text_info["date"]  # type: ignore
+
+    return timestamp.split(sep=" ")[0]
+
 
 def load_nd2(nd2_path: Path, metadata_source: Path) -> FOV:
 
@@ -93,8 +101,13 @@ def load_nd2(nd2_path: Path, metadata_source: Path) -> FOV:
         layers = layers_from_nd2(ndfile)
 
         for layer, meta_layer in zip(layers, meta_layers):
-            if layer.channel.kind != meta_layer.channel.kind or layer.index != meta_layer.index:
-                raise Exception(f"nd2 at {nd2_path} has channel data which conflicts with meta.json for channel {layer.index}")
+            if (
+                layer.channel.kind != meta_layer.channel.kind
+                or layer.index != meta_layer.index
+            ):
+                raise Exception(
+                    f"nd2 at {nd2_path} has channel data which conflicts with meta.json for channel {layer.index}"
+                )
 
         fov = FOV(
             id,
@@ -106,8 +119,7 @@ def load_nd2(nd2_path: Path, metadata_source: Path) -> FOV:
             fov_root,
             labels_hash,
             nd2_hash,
-            group
+            group,
         )
 
     return fov
-    

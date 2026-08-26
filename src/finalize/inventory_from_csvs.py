@@ -10,26 +10,28 @@ from src.defs import (
     FOV,
     Cell,
     CellLayer,
-    Focus
+    Focus,
 )
 from src.util.misc import csv_path_for
 from src.util.parallel import handle_sources_with
 
+
 def inventory_from_CSVs(
     fov: FOV,
-
     cells_dir: Path,
     cell_layers_dir: Path,
     foci_dir: Path,
 ) -> tuple[dict[str, Cell], dict[str, CellLayer], dict[str, Focus]]:
-    """Returns the cell, cell layer, and focus records for FOV given pre-computed CSVs.
-    """
+    """Returns the cell, cell layer, and focus records for FOV given pre-computed CSVs."""
 
     cells = cells_from_csv(fov, csv_path_for(fov.source_path, fov.root, cells_dir))
-    cell_layers = cell_layers_from_csv(cells, csv_path_for(fov.source_path, fov.root, cell_layers_dir))
+    cell_layers = cell_layers_from_csv(
+        cells, csv_path_for(fov.source_path, fov.root, cell_layers_dir)
+    )
     foci = foci_from_csv(cell_layers, csv_path_for(fov.source_path, fov.root, foci_dir))
 
     return cells, cell_layers, foci
+
 
 def batch_inventory_from_CSVs(
     sources: Iterable[Path],
@@ -56,13 +58,9 @@ def batch_inventory_from_CSVs(
 
     results = handle_sources_with(
         sources,
-        lambda source: 
-            inventory_from_CSVs(
-                load(source, root), 
-                cells_dir, 
-                cell_layers_dir, 
-                foci_dir
-            ),
+        lambda source: inventory_from_CSVs(
+            load(source, root), cells_dir, cell_layers_dir, foci_dir
+        ),
         max_workers,
     )
     for source, result in tqdm(
@@ -74,5 +72,5 @@ def batch_inventory_from_CSVs(
         if isinstance(result, Exception):
             raise result
         update_data(source, result)
-    
+
     return (cells, cell_layers, foci)

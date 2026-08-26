@@ -5,12 +5,7 @@ from typing import Iterable
 from typing import Any
 
 from src.spideymaps.stats import Stats
-from src.defs import (
-    Channel,
-    CellLayer,
-    Focus,
-    foci_to_dataframe
-)
+from src.defs import Channel, CellLayer, Focus, foci_to_dataframe
 
 grid_params: dict[str, Any] = dict(
     radius=6,
@@ -19,6 +14,7 @@ grid_params: dict[str, Any] = dict(
     n_phi=(1, 3, 5, 5, 5),
     level=0,
 )
+
 
 def map_cell_layer(cell_layer: CellLayer, foci: Iterable[Focus]):
     cell = cell_layer.cell
@@ -38,7 +34,7 @@ def map_cell_layer(cell_layer: CellLayer, foci: Iterable[Focus]):
         )
 
     # Now that we've passed the two main conditions,
-    # 1) at least one but less than four foci and 
+    # 1) at least one but less than four foci and
     # 2) availability of a bounding box
     # try to create a map
     stats.total_tried_map_creation = 1
@@ -57,15 +53,19 @@ def map_cell_layer(cell_layer: CellLayer, foci: Iterable[Focus]):
     out = sl.LinearRing(out)
 
     spidey_map = Spideymap(
-        bimage=cell_mask, coords=foci_df,
-        xcol="FOCUS::PROPS::DIM_1_COORDINATE", ycol="FOCUS::PROPS::DIM_0_COORDINATE",
+        bimage=cell_mask,
+        coords=foci_df,
+        xcol="FOCUS::PROPS::DIM_1_COORDINATE",
+        ycol="FOCUS::PROPS::DIM_0_COORDINATE",
     )
 
     try:
         spidey_map.make_grid(out=out, **grid_params)
         spidey_map.count()
         spidey_map.coords["cell_length"] = spidey_map.mid.length
-        spidey_map.microns_per_pixel = cell.fov.image_dimensions.microns_per_pixel  # ty: ignore[unresolved-attribute]
+        spidey_map.coords["microns_per_pixel"] = (
+            cell.fov.image_dimensions.microns_per_pixel
+        )
         stats.total_passed_map_creation = 1
     except Exception as _:
         stats.total_failed_grid_creation = 1
@@ -73,9 +73,9 @@ def map_cell_layer(cell_layer: CellLayer, foci: Iterable[Focus]):
 
     return spidey_map, stats
 
+
 def batch_map(
-    cell_layers: dict[str, CellLayer],
-    foci: dict[str, Focus]
+    cell_layers: dict[str, CellLayer], foci: dict[str, Focus]
 ) -> tuple[dict[Channel, list[Spideymap]], dict[Channel, Stats]]:
     """Returns ``(combined, by_channel)`` where
     ``combined`` contains the atlas coords for every focus,
@@ -83,17 +83,14 @@ def batch_map(
     """
     foci_by_cell_layer_id: dict[str, list[Focus]] = {}
     for _, focus in foci.items():
-        foci_by_cell_layer_id.setdefault(
-            focus.cell_layer.id, []
-        ).append(focus)
+        foci_by_cell_layer_id.setdefault(focus.cell_layer.id, []).append(focus)
 
     maps_by_channel: dict[Channel, list[Spideymap]] = {}
     stats_by_channel: dict[Channel, Stats] = {}
-    
+
     for _, cell_layer in cell_layers.items():
         map, stats = map_cell_layer(
-            cell_layer,
-            foci_by_cell_layer_id.get(cell_layer.id, [])
+            cell_layer, foci_by_cell_layer_id.get(cell_layer.id, [])
         )
         channel = cell_layer.layer.channel
 

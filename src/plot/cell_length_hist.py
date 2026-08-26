@@ -2,6 +2,7 @@ from typing import Iterable
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 def plot_cell_length(lengths: Iterable[float]):
     min_len_um = 0
     max_len_um = 3

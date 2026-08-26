@@ -1,8 +1,9 @@
-from typing import Any
 import json
 from pathlib import Path
+from typing import Any
 
 from .main import Channel, ImageDimensions, Layer
+
 
 def _read_meta_file(meta_path: Path) -> dict:
     with meta_path.open("r") as file:
@@ -117,16 +118,27 @@ def image_dimensions_from_meta(meta: dict) -> ImageDimensions:
         microns = dimension_values.get("microns")
         pixels = dimension_values.get("pixels")
 
-        if isinstance(microns, bool) or not isinstance(microns, (int, float)) or microns <= 0:
-            raise ValueError(f"metadata image_dimensions.{axis}.microns must be positive")
+        if (
+            isinstance(microns, bool)
+            or not isinstance(microns, (int, float))
+            or microns <= 0
+        ):
+            raise ValueError(
+                f"metadata image_dimensions.{axis}.microns must be positive"
+            )
         if isinstance(pixels, bool) or not isinstance(pixels, int) or pixels <= 0:
-            raise ValueError(f"metadata image_dimensions.{axis}.pixels must be positive")
+            raise ValueError(
+                f"metadata image_dimensions.{axis}.pixels must be positive"
+            )
 
         values.append({"microns": float(microns), "pixels": int(pixels)})
 
     if len(values) != 2:
-        raise ValueError("metadata image_dimensions must contain exactly two dimensions")
+        raise ValueError(
+            "metadata image_dimensions must contain exactly two dimensions"
+        )
 
+    # These dimensions are reported in the reverse order that they are loaded in
     return ImageDimensions(
         microns=tuple(value["microns"] for value in reversed(values)),
         pixels=tuple(value["pixels"] for value in reversed(values)),

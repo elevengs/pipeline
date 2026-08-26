@@ -1,18 +1,9 @@
-import torch
 import os
+import threading
 from os import path
 from pathlib import Path
-import threading
 
 FIGURE_LOCK = threading.RLock()
-
-
-def get_device() -> str:
-    if torch.backends.mps.is_available():
-        return "mps"
-    if torch.cuda.is_available():
-        return "cuda"
-    return "cpu"
 
 
 def mkdir_p(dest: Path):
@@ -30,6 +21,5 @@ def replace_root_with(source: Path, root: Path, new: Path) -> Path:
 
 
 def csv_path_for(source: Path, root: Path, output_dir: Path) -> Path:
-    """Return the CSV output path corresponding to a source image.
-    """
+    """Return the CSV output path corresponding to a source image."""
     return replace_root_with(source, root, output_dir).with_suffix(".csv")

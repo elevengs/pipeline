@@ -5,22 +5,26 @@ from pathlib import Path
 import imageio.v3 as iio
 import numpy as np
 from nd2 import imread
-from skimage import (segmentation)
+from skimage import segmentation
+
 
 def file_hash(path: Path) -> str:
     digest = None
-    with open(path, mode = "rb") as f:
+    with open(path, mode="rb") as f:
         digest = hashlib.file_digest(f, "shake_256")
     # Appears to be a bug
-    return digest.hexdigest(10)  # ty: ignore[too-many-positional-arguments]
+    return digest.hexdigest(10)  # ty: ignore[too-many-positional-arguments] # type: ignore
+
 
 def str_hash(x: str) -> str:
     return hashlib.shake_256(x.encode("utf8")).hexdigest(10)
+
 
 @dataclass(frozen=True)
 class Channel:
     name: str
     kind: str
+
 
 @dataclass(frozen=True)
 class Layer:
@@ -38,7 +42,7 @@ class Layer:
     @property
     def is_fluor(self) -> bool:
         return self.channel.kind == "fluor"
-   
+
 
 @dataclass(frozen=True)
 class ImageDimensions:
@@ -47,10 +51,7 @@ class ImageDimensions:
 
     @property
     def microns_per_pixel_by_dimension(self) -> tuple[float, float]:
-        return (
-            self.microns[0] / self.pixels[0], 
-            self.microns[1] / self.pixels[1]
-        )
+        return (self.microns[0] / self.pixels[0], self.microns[1] / self.pixels[1])
 
     @property
     def microns_per_pixel(self) -> float:
@@ -62,22 +63,25 @@ class ImageDimensions:
             )
         return float(np.sqrt(scales[0] * scales[1]))
 
+
 @dataclass(frozen=True)
 class BoundingBox:
-    bounds: np.ndarray # shape (dimensions, 2)
+    bounds: np.ndarray  # shape (dimensions, 2)
 
     def crop(self, target: np.ndarray) -> np.ndarray:
         return target[
-            self.bounds[0, 0]:self.bounds[0, 1], 
-            self.bounds[1, 0]:self.bounds[1, 1]
+            self.bounds[0, 0] : self.bounds[0, 1], self.bounds[1, 0] : self.bounds[1, 1]
         ]
+
 
 ACCEPTED_CHANNEL_KINDS = ["phase", "fluor"]
 
+
 def calculate_FOV_id(labels_hash: str, source_hash: str) -> str:
     return str_hash(f"{source_hash}_{labels_hash}")
-class FOV:
 
+
+class FOV:
     id: str
 
     num_layers: int
@@ -113,7 +117,7 @@ class FOV:
         source_hash: str,
         group: str = "all",
     ) -> None:
-        self.date = date 
+        self.date = date
 
         self.root = root
         self.image_dimensions = image_dimensions
@@ -128,15 +132,16 @@ class FOV:
         if not isinstance(labels_hash, str) or not isinstance(source_hash, str):
             raise ValueError("labels_hash and source_hash must be strings")
 
-
         self.labels_hash = labels_hash
         self.source_hash = source_hash
         calculated_id = calculate_FOV_id(self.labels_hash, self.source_hash)
 
         if not id == calculated_id:
-            raise Exception(f"got id {id}, but expected {calculated_id} based on the source hash {self.source_hash} and labels hash {self.labels_hash}")
+            raise Exception(
+                f"got id {id}, but expected {calculated_id} based on the source hash {self.source_hash} and labels hash {self.labels_hash}"
+            )
         self.id = calculated_id
-        
+
         self.num_layers = len(layers)
 
         for layer in layers:
@@ -151,11 +156,11 @@ class FOV:
 
     @property
     def loaded_labels(self) -> bool:
-        return (self._labels is not None)
+        return self._labels is not None
 
     @property
     def loaded_data(self) -> bool:
-        return (self._data is not None)
+        return self._data is not None
 
     @property
     def data(self) -> np.ndarray:
@@ -168,14 +173,18 @@ class FOV:
             elif suffix in {".tif", ".tiff"}:
                 self.load_tif(self.source_path)
             else:
-                raise Exception("FOV source path does not end with .nd2, .tif, or .tiff")
+                raise Exception(
+                    "FOV source path does not end with .nd2, .tif, or .tiff"
+                )
 
         return self.data
 
     def load_tif(self, tif_path: Path):
         calculated_hash = file_hash(tif_path)
         if self.source_hash != calculated_hash:
-            raise Exception(f"source hash {calculated_hash} did not match expected hash {self.source_hash}")
+            raise Exception(
+                f"source hash {calculated_hash} did not match expected hash {self.source_hash}"
+            )
         data = iio.imread(tif_path)
         if data.ndim == 3:
             self.num_layers = data.shape[0]
@@ -187,7 +196,9 @@ class FOV:
                 f"got FOV data of shape {data.shape}, but that is invalid; data must be either 2- or 3-dimensional, with shape (DIM_X, DIM_Y) or (NUM_LAYERS, DIM_X, DIM_Y)"
             )
         if self.num_layers != len(self.layers):
-            raise Exception(f"got FOV data of shape {data.shape} but expected {len(self.layers)} layers")
+            raise Exception(
+                f"got FOV data of shape {data.shape} but expected {len(self.layers)} layers"
+            )
 
         self._data = data
         self.source_hash = calculated_hash
@@ -198,7 +209,9 @@ class FOV:
     def load_nd2(self, nd2_path: Path):
         calculated_hash = file_hash(nd2_path)
         if self.source_hash != calculated_hash:
-            raise Exception(f"source hash {calculated_hash} did not match expected hash {self.source_hash}")
+            raise Exception(
+                f"source hash {calculated_hash} did not match expected hash {self.source_hash}"
+            )
         data = imread(nd2_path)
         if data.ndim == 3:
             self.num_layers = data.shape[0]
@@ -210,7 +223,9 @@ class FOV:
                 f"got FOV data of shape {data.shape}, but that is invalid; data must be either 2- or 3-dimensional, with shape (DIM_X, DIM_Y) or (NUM_LAYERS, DIM_X, DIM_Y)"
             )
         if self.num_layers != len(self.layers):
-            raise Exception(f"got FOV data of shape {data.shape} but expected {len(self.layers)} layers")
+            raise Exception(
+                f"got FOV data of shape {data.shape} but expected {len(self.layers)} layers"
+            )
 
         self._data = data
         self.source_hash = calculated_hash
@@ -218,13 +233,14 @@ class FOV:
         self.validate_dimensions()
         return data
 
-
     def load_labels(self, labels_path: Path) -> np.ndarray:
 
         calculated_hash = file_hash(labels_path)
 
         if self.labels_hash != calculated_hash:
-            raise Exception(f"labels hash {calculated_hash} did not match expected hash {self.labels_hash}")
+            raise Exception(
+                f"labels hash {calculated_hash} did not match expected hash {self.labels_hash}"
+            )
         labels = segmentation.clear_border(iio.imread(labels_path))
 
         self._labels = labels
@@ -263,23 +279,16 @@ class FOV:
     # This property assumes there will only exactly one phase channel
     # This condition is checked by init
     @property
-    def phase_index(
-        self
-    ) -> int:
+    def phase_index(self) -> int:
         for layer in self.layers:
             if layer.kind == "phase":
                 return layer.index
         raise Exception("FOV.phase_index called, but no phase layer found")
 
-    def phase_data(
-        self
-    ) -> np.ndarray:
+    def phase_data(self) -> np.ndarray:
         return self.data[self.phase_index]
 
-    def layer_data(
-        self,
-        layer: Layer
-    ) -> np.ndarray:
+    def layer_data(self, layer: Layer) -> np.ndarray:
         return self.data[layer.index]
 
     def dir_str(self) -> str | None:
@@ -291,5 +300,3 @@ class FOV:
         if self.root == self.source_path:
             return None
         return str(self.source_path.parent.relative_to(self.root))
-        
-   

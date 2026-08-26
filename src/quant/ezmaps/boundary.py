@@ -11,6 +11,7 @@ import numpy as np
 from skimage.measure import find_contours
 from scipy.interpolate import BSpline, make_interp_spline, make_smoothing_spline
 
+
 def boundary_points(mask: np.ndarray) -> np.ndarray:
     """Returns ``np.ndarray`` of shape ``(n, 2)`` where ``n`` is the number of points around the mask edge.
 
@@ -19,17 +20,16 @@ def boundary_points(mask: np.ndarray) -> np.ndarray:
     """
     return find_contours(mask, 0.5)[0]
 
+
 def fit_boundary(
-    centroid: np.ndarray,
-    boundary_pts: np.ndarray,
-    n_theta_samples: int = 1000 
+    centroid: np.ndarray, boundary_pts: np.ndarray, n_theta_samples: int = 1000
 ) -> tuple[BSpline, BSpline, float]:
     """Returns ``(boundary_by_theta, boundary_by_arc_length, perimeter)``.
 
     ``boundary_by_theta`` is a ``BSpline`` which returns ``(row, col)`` coordinates along the boundary of the cell
-    given the angle of the boundary point from the centroid, where ``theta = 0`` points in the positive row direction. 
+    given the angle of the boundary point from the centroid, where ``theta = 0`` points in the positive row direction.
 
-    ``boundary_by_arc_length`` parametrizes the same boundary in terms of the arc length, starting from the point on 
+    ``boundary_by_arc_length`` parametrizes the same boundary in terms of the arc length, starting from the point on
     the boundary where ``theta = 0``.
 
     ``perimeter`` is the arc length of the boundary of the cell.
@@ -47,27 +47,19 @@ def fit_boundary(
 
     # Angle from the centroid as to the positive row direction
     # the absolute start angle doesn't matter
-    theta = [
-        np.atan2(pt[1] - centroid[1], pt[0] - centroid[0])
-            for pt in boundary_pts
-    ]
+    theta = [np.atan2(pt[1] - centroid[1], pt[0] - centroid[0]) for pt in boundary_pts]
 
     sorted_theta, sorted_coordinates = list(
         # zip(*_) is the inverse of zip(_)
         # so this is zip -> sort by angle -> unzip
-        zip(
-            *sorted(
-                zip(theta, boundary_pts),
-                key = lambda x: x[0]
-            )
-        )
+        zip(*sorted(zip(theta, boundary_pts), key=lambda x: x[0]))
     )
 
     # Remove non-ascending theta values
     # SciPy gets mad when you try to fit
     # a spline with non-ascending x values
     asc_theta, asc_coordinates = ([], [])
-    for i in range(len(sorted_theta)):         
+    for i in range(len(sorted_theta)):
         if len(asc_theta) == 0 or sorted_theta[i] > asc_theta[len(asc_theta) - 1]:
             asc_theta.append(sorted_theta[i])
             asc_coordinates.append(sorted_coordinates[i])
@@ -90,39 +82,39 @@ def fit_boundary(
         # this value is smoothing
         # increase to get a smoother spline at the potential
         # expense of accuracy
-        lam = 0.01
+        lam=0.01,
     )
 
     # Next: we have the outline parametrized by theta,
     # but we want it parametrized by arc length.
-    
+
     # There must be an odd number of points so that there is a middle value
-    use_n_theta_samples = n_theta_samples if n_theta_samples % 2 == 1 else n_theta_samples + 1
-    theta_new = np.linspace(- 3 * np.pi, 3 * np.pi, num = use_n_theta_samples)
+    use_n_theta_samples = (
+        n_theta_samples if n_theta_samples % 2 == 1 else n_theta_samples + 1
+    )
+    theta_new = np.linspace(-3 * np.pi, 3 * np.pi, num=use_n_theta_samples)
     coordinates_new = boundary_by_theta(theta_new)
 
     # Prepend 0 so that this has the same length as phi_new
     # otherwise, with np.diff it would be 1 shorter.
     # This makes logical sense because the first point
     # has a cumulative arc length of zero, not some positive number.
-    arc_length = [0, *np.cumsum(
-        np.sqrt(
-            np.sum(np.square(np.diff(coordinates_new, axis=0)), axis=1)
-        )
-    )]
+    arc_length = [
+        0,
+        *np.cumsum(
+            np.sqrt(np.sum(np.square(np.diff(coordinates_new, axis=0)), axis=1))
+        ),
+    ]
 
     # Translate arc length so that 0 lies at theta = 0
     arc_length_at_0 = arc_length[int((len(arc_length) - 1) / 2)]
     perimeter = np.max(arc_length) / 3
     arc_length = [x - arc_length_at_0 for x in arc_length]
-    
+
     # Interpolate instead of smoothing
     # This is necessary when the values you have
     # are exactly accurate and you need to make
     # inferences about the values in between
-    boundary_by_arc_length = make_interp_spline(
-        arc_length,
-        coordinates_new
-    )
+    boundary_by_arc_length = make_interp_spline(arc_length, coordinates_new)
 
     return boundary_by_theta, boundary_by_arc_length, perimeter

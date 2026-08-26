@@ -1,29 +1,29 @@
-import numpy as np
 from pathlib import Path
 from types import SimpleNamespace
 
+import numpy as np
 from skimage import segmentation
 from tqdm import tqdm
 
 from src.defs import (
+    FOV,
     Cell,
     CellLayer,
     Focus,
-    FOV,
     cell_layers_to_dataframe,
     cells_to_dataframe,
     foci_to_dataframe,
 )
 from src.defs.fov import get_all_cell_props
+from src.util.misc import mkdir_p
+
 from .focus_detection import FocusDetectionConfig
 from .focus_detection.fluor_layer import process_fluor_layer
 from .focus_detection.main import detect_foci
-from src.util.misc import mkdir_p
+
 
 def inventory(
-    fov,
-    focus_detection_config: FocusDetectionConfig,
-    stepwise_figure_dest = None
+    fov, focus_detection_config: FocusDetectionConfig, stepwise_figure_dest=None
 ) -> tuple[dict[str, Cell], dict[str, CellLayer], dict[str, Focus]]:
     """Returns ``(cells, cell_layers, foci)``.
     Computes cell polarity.
@@ -45,8 +45,7 @@ def inventory(
     # would be covered by two labels after dilation are assigned to the closest
     # Note - the PolyP code expands the bounding box only, but this is not a good idea; both should be expanded
     dilated_labels = segmentation.expand_labels(
-        fov.labels,
-        distance=focus_detection_config.expand_by
+        fov.labels, distance=focus_detection_config.expand_by
     )
 
     cells = {}
@@ -54,32 +53,38 @@ def inventory(
     foci = {}
 
     for _, cell_props in tqdm(
-        all_cell_props.iterrows(),
-        desc = f"inventory {fov.source_path}",
-        unit = "cell"
+        all_cell_props.iterrows(), desc=f"inventory {fov.source_path}", unit="cell"
     ):
         cell_props = cell_props.to_dict()
         cell_label = int(cell_props["label"])
 
-        cell = Cell(fov, cell_label, props=SimpleNamespace(**{
-            key: value for key, value in cell_props.items() if key != "label"
-        }))
+        cell = Cell(
+            fov,
+            cell_label,
+            props=SimpleNamespace(
+                **{key: value for key, value in cell_props.items() if key != "label"}
+            ),
+        )
 
         cell.props.midline_length = cell.map.midline_length
 
         cell_foci = []
-        
+
         for layer in fov.layers:
             if not layer.is_fluor:
-                continue        
-            
+                continue
+
             cell_layer, new_foci = detect_foci(
                 cell,
                 layer,
                 fluor_layers_data,
                 dilated_labels,
                 focus_detection_config,
-                stepwise_figure_dest=None if stepwise_figure_dest is None else stepwise_figure_dest.joinpath(f"id_{cell.id}_{layer.channel.name}.png")
+                stepwise_figure_dest=None
+                if stepwise_figure_dest is None
+                else stepwise_figure_dest.joinpath(
+                    f"id_{cell.id}_{layer.channel.name}.png"
+                ),
             )
 
             cell_layers[cell_layer.id] = cell_layer
@@ -97,18 +102,19 @@ def inventory(
 
     return (cells, cell_layers, foci)
 
+
 def write_inventory_CSVs(
     fov: FOV,
     cells_dest: Path,
     cell_layers_dest: Path,
     foci_dest: Path,
     focus_detection_config: FocusDetectionConfig,
-    stepwise_figure_dest: Path | None = None
+    stepwise_figure_dest: Path | None = None,
 ):
     (cells, cell_layers, foci) = inventory(
         fov,
         focus_detection_config=focus_detection_config,
-        stepwise_figure_dest = stepwise_figure_dest
+        stepwise_figure_dest=stepwise_figure_dest,
     )
 
     cells_df = cells_to_dataframe(cells)

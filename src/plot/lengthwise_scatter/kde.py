@@ -1,8 +1,8 @@
 import numpy as np
+import seaborn as sns
 from matplotlib import pyplot as plt
 from matplotlib.colorizer import Colorizer
 from scipy.stats import gaussian_kde
-import seaborn as sns
 
 from .main import DEFAULT_CELL_LENGTH_KEY, DEFAULT_POSITION_KEY, colorbar
 
@@ -10,13 +10,13 @@ from .main import DEFAULT_CELL_LENGTH_KEY, DEFAULT_POSITION_KEY, colorbar
 def scatter_kde_colors(
     ax,
     foci_df,
-    cmap = sns.color_palette("plasma", as_cmap=True),
+    cmap=sns.color_palette("plasma", as_cmap=True),
     position_key=DEFAULT_POSITION_KEY,
     cell_length_key=DEFAULT_CELL_LENGTH_KEY,
 ):
-    norm = plt.Normalize(vmin=0, vmax=4)
+    norm = plt.Normalize(vmin=0, vmax=4)  # type: ignore (bug)
     colorizer = Colorizer(cmap=cmap, norm=norm)
-    
+
     points = foci_df[[position_key, cell_length_key]].to_numpy(dtype=float).T
     try:
         color_from_kde = gaussian_kde(points)(points)

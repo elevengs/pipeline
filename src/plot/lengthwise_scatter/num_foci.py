@@ -8,13 +8,13 @@ from .main import DEFAULT_CELL_LENGTH_KEY, DEFAULT_POSITION_KEY, colorbar
 def scatter_num_foci(
     ax,
     foci_df,
-    cmap = plt.colormaps["okabe_ito"],
+    cmap=plt.colormaps["okabe_ito"],
     position_key=DEFAULT_POSITION_KEY,
     cell_length_key=DEFAULT_CELL_LENGTH_KEY,
 ):
     norm = BoundaryNorm([1, 2, 3, cmap.N], cmap.N, extend="both")
     colorizer = Colorizer(cmap=cmap, norm=norm)
-    
+
     l_sorted = foci_df[position_key]
     cell_len_sorted = foci_df[cell_length_key]
 

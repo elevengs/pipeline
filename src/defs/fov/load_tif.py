@@ -36,4 +36,3 @@ def load_tif(tif_path: Path, metadata_source: Path) -> FOV:
         group,
     )
     return fov
-        

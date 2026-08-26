@@ -1,5 +1,6 @@
-import pandas as pd
 from pathlib import Path
+
+import pandas as pd
 
 from ..fov import FOV
 from ..records import objects_to_dataframe, row_to_properties
@@ -18,13 +19,12 @@ def cells_to_dataframe(cells: dict[str, Cell]) -> pd.DataFrame:
 def cells_from_dataframe(fov: FOV, cells_df: pd.DataFrame) -> dict[str, Cell]:
     cells = {}
     for _, row in cells_df.iterrows():
-
         label_column = "CELL::LABEL"
         id_column = "CELL::ID"
 
         cell = Cell(
             fov,
-            int(row[label_column]),
+            int(row[label_column]),  # type: ignore
             str(row[id_column]),
         )
 

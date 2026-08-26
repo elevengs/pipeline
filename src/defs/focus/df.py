@@ -3,6 +3,7 @@ from pathlib import Path
 import pandas as pd
 
 from src.quant.ezmaps import CellPoint
+
 from ..cell_layer import CellLayer
 from ..records import objects_to_dataframe, row_to_properties
 from .main import Focus
@@ -50,11 +51,11 @@ def foci_from_dataframe(
             )
 
         cell_point = CellPoint(
-            midline_position_px=row["FOCUS::MIDLINE_POSITION_PX"],
-            offset_from_midline_px=row["FOCUS::OFFSET_FROM_MIDLINE_PX"],
+            midline_position_px=row["FOCUS::MIDLINE_POSITION_PX"],  # type: ignore
+            offset_from_midline_px=row["FOCUS::OFFSET_FROM_MIDLINE_PX"],  # type: ignore
         )
 
-        focus = Focus(cell_layer, int(row["FOCUS::INDEX"]), cell_point)
+        focus = Focus(cell_layer, int(row["FOCUS::INDEX"]), cell_point)  # type: ignore
 
         focus.props = row_to_properties(row, "FOCUS::PROPS::")
 

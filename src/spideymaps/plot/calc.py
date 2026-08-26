@@ -3,6 +3,7 @@ import numpy as np
 import shapely as sl
 from src.spideymaps.spideymaps_v2 import Spideymap, extend_spine
 
+
 def create_rep_grid_colicoords(cc_params, grid_params):
     map = Spideymap()
 
@@ -10,11 +11,11 @@ def create_rep_grid_colicoords(cc_params, grid_params):
     out = sl.LinearRing(out)
 
     mid = calc_midline(
-        np.linspace(cc_params['xl'], cc_params['xr'], 100),
-        a0 = cc_params['a0'],
-        a1 = cc_params['a1'],
-        a2 = cc_params['a2']
-        )
+        np.linspace(cc_params["xl"], cc_params["xr"], 100),
+        a0=cc_params["a0"],
+        a1=cc_params["a1"],
+        a2=cc_params["a2"],
+    )
 
     mid = sl.LineString(mid)
     mid = extend_spine(mid, out)
@@ -22,25 +23,27 @@ def create_rep_grid_colicoords(cc_params, grid_params):
 
     return map
 
+
 def calc_midline(x_arr, a0, a1, a2):
-    y = a0 + a1 * x_arr + a2 * x_arr ** 2
+    y = a0 + a1 * x_arr + a2 * x_arr**2
     mid = np.array([x_arr, y]).T
 
     return mid
+
 
 def calc_outline(xl, xr, a0, a1, a2, r):
     numpoints = 500
     t = np.linspace(xl, xr, num=numpoints)
 
     x_top = t + r * ((a1 + 2 * a2 * t) / np.sqrt(1 + (a1 + 2 * a2 * t) ** 2))
-    y_top = a0 + a1*t + a2*(t**2) - r * (1 / np.sqrt(1 + (a1 + 2*a2*t)**2))
+    y_top = a0 + a1 * t + a2 * (t**2) - r * (1 / np.sqrt(1 + (a1 + 2 * a2 * t) ** 2))
 
-    x_bot = t + - r * ((a1 + 2 * a2 * t) / np.sqrt(1 + (a1 + 2 * a2 * t) ** 2))
-    y_bot = a0 + a1*t + a2*(t**2) + r * (1 / np.sqrt(1 + (a1 + 2*a2*t)**2))
+    x_bot = t + -r * ((a1 + 2 * a2 * t) / np.sqrt(1 + (a1 + 2 * a2 * t) ** 2))
+    y_bot = a0 + a1 * t + a2 * (t**2) + r * (1 / np.sqrt(1 + (a1 + 2 * a2 * t) ** 2))
 
     psi = np.arctan(-p_dx(xl, a1, a2))
 
-    th_l = np.linspace(-0.5*np.pi+psi, 0.5*np.pi + psi, num=200)
+    th_l = np.linspace(-0.5 * np.pi + psi, 0.5 * np.pi + psi, num=200)
     cl_dx = r * np.cos(th_l)
     cl_dy = r * np.sin(th_l)
 
@@ -49,7 +52,7 @@ def calc_outline(xl, xr, a0, a1, a2, r):
 
     psi = np.arctan(-p_dx(xr, a1, a2))
 
-    th_r = np.linspace(0.5*np.pi - psi, -0.5*np.pi - psi, num=200)
+    th_r = np.linspace(0.5 * np.pi - psi, -0.5 * np.pi - psi, num=200)
     cr_dx = r * np.cos(th_r)
     cr_dy = r * np.sin(th_r)
 
@@ -63,8 +66,10 @@ def calc_outline(xl, xr, a0, a1, a2, r):
 
     return out
 
+
 def p_dx(x_arr, a1, a2):
     return a1 + 2 * a2 * x_arr
+
 
 def get_rep(length_ranges, cell_lengths_um, pixel_size_um):
     cell_lengths_um = np.asarray(cell_lengths_um)
@@ -92,6 +97,7 @@ def get_rep(length_ranges, cell_lengths_um, pixel_size_um):
             print(e)
 
     return rep_cell_lengths, rep_cells
+
 
 def make_plot_labels(atlas, length_ranges, pixel_size_um):
 

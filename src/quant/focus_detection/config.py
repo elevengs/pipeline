@@ -1,6 +1,7 @@
 from argparse import Namespace, ArgumentParser
 from dataclasses import dataclass
 
+
 @dataclass(frozen=True, slots=True)
 class FocusDetectionConfig:
     """Parameters controlling fluorescence preprocessing and focus detection."""
@@ -12,7 +13,7 @@ class FocusDetectionConfig:
     max_sigma: float
     num_sigma: float
     overlap: float
-    expand_by: float
+    expand_by: int
     bg_sub_radius: float
     denoise_radius: float
     denoise_amount: float
@@ -40,7 +41,7 @@ class FocusDetectionConfig:
             denoise_radius=args.denoise_radius,
             denoise_amount=args.denoise_amount,
             gaussian_sigma=args.gaussian_sigma,
-            plot_crop_margin=args.plot_crop_margin
+            plot_crop_margin=args.plot_crop_margin,
         )
 
 
@@ -50,15 +51,16 @@ DEFAULT_DETECTION_CONFIG = FocusDetectionConfig(
     IQR_multiple=2.0,
     min_sigma=2.0,
     max_sigma=3.8,
-    num_sigma = 20,
+    num_sigma=20,
     overlap=0.75,
-    expand_by=2.0,
+    expand_by=2,
     bg_sub_radius=1.5,
     denoise_radius=2.0,
     denoise_amount=6.0,
     gaussian_sigma=1.2,
-    plot_crop_margin=3
+    plot_crop_margin=3,
 )
+
 
 def add_detection_config_args(parser: ArgumentParser):
     parser.add_argument(
@@ -71,7 +73,7 @@ def add_detection_config_args(parser: ArgumentParser):
         "--absolute-detection-threshold",
         type=float,
         default=DEFAULT_DETECTION_CONFIG.absolute_detection_threshold,
-        help = f"What absolute intensity value a putative focus must surpass in order to be detected; default: {str(DEFAULT_DETECTION_CONFIG.absolute_detection_threshold)}."
+        help=f"What absolute intensity value a putative focus must surpass in order to be detected; default: {str(DEFAULT_DETECTION_CONFIG.absolute_detection_threshold)}.",
     )
     parser.add_argument(
         "--IQR-multiple",
@@ -107,7 +109,7 @@ def add_detection_config_args(parser: ArgumentParser):
     )
     parser.add_argument(
         "--expand-by",
-        type=float,
+        type=int,
         default=DEFAULT_DETECTION_CONFIG.expand_by,
         help=f"Distance (in pixels) to expand each cell label in every direction by for the purpose of assigning foci to it. Increase this to detect foci further outside the edge of a cell label; default: {str(DEFAULT_DETECTION_CONFIG.expand_by)}",
     )
@@ -115,7 +117,7 @@ def add_detection_config_args(parser: ArgumentParser):
         "--plot-crop-margin",
         type=int,
         help=f"Margin (in pixels) to show around the cell contour for the stepwise plots; default: {str(DEFAULT_DETECTION_CONFIG.plot_crop_margin)}.",
-        default = DEFAULT_DETECTION_CONFIG.plot_crop_margin
+        default=DEFAULT_DETECTION_CONFIG.plot_crop_margin,
     )
     parser.add_argument(
         "--bg-sub-radius",

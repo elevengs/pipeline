@@ -4,8 +4,7 @@ from src.util.misc import mkdir_p
 
 
 def save_fig(fig, path_basename: Path, save_svg: bool = True):
-    """Returns nothing, but saves a figure as PNG and, optionally, SVG.
-    """
+    """Returns nothing, but saves a figure as PNG and, optionally, SVG."""
     mkdir_p(path_basename)
     fig.savefig(
         path_basename.with_suffix(".png"),

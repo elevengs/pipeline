@@ -10,8 +10,7 @@ def objects_to_dataframe(
     column_values: Callable,
     properties_prefix: str,
 ) -> pd.DataFrame:
-    """Returns DataFrame representing objects with a ``props`` namespace, such as ``Cell``, `CellLayer``, and ``Focus``.
-    """
+    """Returns DataFrame representing objects with a ``props`` namespace, such as ``Cell``, `CellLayer``, and ``Focus``."""
     objects = list(objects)
     columns = list(column_names)
     property_columns = sorted(
@@ -36,14 +35,15 @@ def objects_to_dataframe(
 
     return pd.DataFrame(rows, columns=columns)
 
-def row_to_properties(
-    row: pd.Series,
-    properties_prefix: str
-) -> SimpleNamespace:
+
+def row_to_properties(row: pd.Series, properties_prefix: str) -> SimpleNamespace:
     res = SimpleNamespace()
     for column, value in row.items():
-        if not isinstance(column, str) or not column.startswith(properties_prefix) or pd.isna(value):
+        if (
+            not isinstance(column, str)
+            or not column.startswith(properties_prefix)
+            or pd.isna(value)
+        ):
             continue
         setattr(res, column.removeprefix(properties_prefix).lower(), value)
     return res
-    

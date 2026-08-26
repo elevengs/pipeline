@@ -2,11 +2,12 @@ from types import SimpleNamespace
 
 import numpy as np
 
-from ..fov import FOV
 from src.quant.ezmaps import CellMap
 
-class Cell:
+from ..fov import FOV
 
+
+class Cell:
     id: str
     label: int
 
@@ -35,16 +36,18 @@ class Cell:
         self.props = SimpleNamespace() if props is None else props
         self._map = None
 
-    def csv_columns():
+    @classmethod
+    def csv_columns(cls):
         return [
             ("CELL::ID", lambda x: x.id),
             ("CELL::LABEL", lambda x: x.label),
             ("FOV::DIR", lambda x: x.fov.dir_str()),
             ("FOV::GROUP", lambda x: x.fov.group),
-            ("FOV::DATE", lambda x: x.fov.date)
+            ("FOV::DATE", lambda x: x.fov.date),
         ]
 
-    def csv_column_names():
+    @classmethod
+    def csv_column_names(cls):
         return [name for name, _ in Cell.csv_columns()]
 
     def csv_column_values(self):
@@ -53,9 +56,10 @@ class Cell:
     @property
     def mask(self) -> np.ndarray:
         if self.fov.labels is None:
-            raise ValueError("cell mask is unavailable because FOV labels are not loaded")
+            raise ValueError(
+                "cell mask is unavailable because FOV labels are not loaded"
+            )
         return (self.fov.labels == self.label).astype(np.int32)
-
 
     # lazy-load this because it depends on fov.labels
     _map: CellMap | None
@@ -69,4 +73,3 @@ class Cell:
 
             self._map = CellMap(bounding_box, mask)
         return self._map
-        

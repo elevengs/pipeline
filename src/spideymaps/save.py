@@ -11,14 +11,14 @@ import matplotlib.pyplot as plt
 DEFAULT_POSITION_KEY = "l_abs_centered_pol_um"
 DEFAULT_CELL_LENGTH_KEY = "cell_length_um"
 
+
 def save_spideymaps_channel_plots(
     channel: Channel,
     cell_layers_df,
     atlas: SpideyAtlas,
     out: Path,
 ):
-    """Returns nothing, but saves plots for one finalized SpideyAtlas.
-    """
+    """Returns nothing, but saves plots for one finalized SpideyAtlas."""
     save_foci_plots(
         cell_layers_df,
         atlas.coords,
@@ -29,18 +29,16 @@ def save_spideymaps_channel_plots(
 
     save_cell_length_plot(atlas_cell_lengths_um(atlas), out)
 
-    save_rep_cells_plot(channel,atlas,out)
+    save_rep_cells_plot(channel, atlas, out)
 
     fig_foci_counts = plot_foci_counts(cell_layers_df)
     fig_foci_counts.suptitle(channel.name)
     save_fig(fig_foci_counts, out.joinpath("fig_foci_counts"))
     plt.close(fig_foci_counts)
 
+
 def finalize_channel(
-    channel: Channel,
-    cell_layers_df,
-    atlas: SpideyAtlas,
-    out: Path
+    channel: Channel, cell_layers_df, atlas: SpideyAtlas, out: Path
 ) -> None:
     out.mkdir(parents=True, exist_ok=True)
     save_spideymaps_channel_plots(channel, cell_layers_df, atlas, out)
@@ -52,6 +50,7 @@ def finalize_channel(
         index_label=("i_r", "i_l", "i_phi"),
     )
 
+
 def finalize_channels(
     atlases_by_channel: dict[Channel, SpideyAtlas],
     cell_layers_df,
@@ -60,12 +59,11 @@ def finalize_channels(
     for channel, atlas in atlases_by_channel.items():
         finalize_channel(
             channel,
-            cell_layers_df[
-                cell_layers_df["LAYER::CHANNEL_NAME"] == channel.name
-            ],
+            cell_layers_df[cell_layers_df["LAYER::CHANNEL_NAME"] == channel.name],
             atlas,
             out / channel.name,
         )
+
 
 def finalize_spideymaps(
     cells,

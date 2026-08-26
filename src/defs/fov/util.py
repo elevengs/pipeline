@@ -29,18 +29,24 @@ def find_labels(source_path: Path) -> Path:
     )
 
 
-def get_all_cell_props(
-    fov: FOV
-):
+def get_all_cell_props(fov: FOV):
     """Returns a ``DataFrame`` containing cell information, including their labels and morphological information.
 
-    Uses ``regionprops`` to measure properties of cells. 
+    Uses ``regionprops`` to measure properties of cells.
     """
-    props_list = ("label", "bbox", "centroid", "orientation", "area", "axis_major_length", "axis_minor_length")
+    props_list = (
+        "label",
+        "bbox",
+        "centroid",
+        "orientation",
+        "area",
+        "axis_major_length",
+        "axis_minor_length",
+    )
     return pd.DataFrame(
         regionprops_table(
             fov.labels,
             properties=props_list,
-            spacing=fov.image_dimensions.microns_per_pixel_by_dimension
+            spacing=fov.image_dimensions.microns_per_pixel_by_dimension,
         )
     )

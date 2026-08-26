@@ -2,8 +2,10 @@ from types import SimpleNamespace
 
 import numpy as np
 
-from ..cell_layer import CellLayer
 from src.quant.ezmaps import CellPoint
+
+from ..cell_layer import CellLayer
+
 
 class Focus:
     id: str
@@ -17,7 +19,7 @@ class Focus:
         cell_layer: CellLayer,
         index: int,
         cell_point: CellPoint,
-        props: SimpleNamespace | None = None
+        props: SimpleNamespace | None = None,
     ):
         self.id = f"{cell_layer.id}_{index}"
         self.cell_layer = cell_layer
@@ -43,25 +45,37 @@ class Focus:
 
     @property
     def midline_position_um(self):
-        return self.cell_point.midline_position_px * self.fov.image_dimensions.microns_per_pixel
-    
+        return (
+            self.cell_point.midline_position_px
+            * self.fov.image_dimensions.microns_per_pixel
+        )
+
     @property
     def midline_position_pol_um(self):
         use_polarity = 1
-        
-        if getattr(self.cell.props, "polarity", None) is not None and self.cell.props.polarity < 0:
+
+        if (
+            getattr(self.cell.props, "polarity", None) is not None
+            and self.cell.props.polarity < 0
+        ):
             use_polarity = -1
         return self.midline_position_um * use_polarity
 
     @property
     def offset_from_midline_um(self):
-        return self.cell_point.offset_from_midline_px * self.fov.image_dimensions.microns_per_pixel
+        return (
+            self.cell_point.offset_from_midline_px
+            * self.fov.image_dimensions.microns_per_pixel
+        )
 
     @property
     def cell_midline_length_um(self):
-        return self.cell.map.midline_length * self.fov.image_dimensions.microns_per_pixel
+        return (
+            self.cell.map.midline_length * self.fov.image_dimensions.microns_per_pixel
+        )
 
-    def csv_columns():
+    @classmethod
+    def csv_columns(cls):
         return [
             ("FOCUS::ID", lambda x: x.id),
             ("FOCUS::INDEX", lambda x: x.index),
@@ -70,19 +84,29 @@ class Focus:
             ("FOV::DIR", lambda x: x.cell.fov.dir_str()),
             ("FOV::GROUP", lambda x: x.cell.fov.group),
             ("FOV::DATE", lambda x: x.fov.date),
-            ("FOV::MICRONS_PER_PIXEL", lambda x: x.fov.image_dimensions.microns_per_pixel),
-            ("CELL_LAYER::PROPS::NUM_FOCI", lambda x: getattr(x.cell_layer.props, "num_foci", np.nan)),
+            (
+                "FOV::MICRONS_PER_PIXEL",
+                lambda x: x.fov.image_dimensions.microns_per_pixel,
+            ),
+            (
+                "CELL_LAYER::PROPS::NUM_FOCI",
+                lambda x: getattr(x.cell_layer.props, "num_foci", np.nan),
+            ),
             ("LAYER::INDEX", lambda x: x.layer.index),
             ("LAYER::CHANNEL_NAME", lambda x: x.channel.name),
             ("FOCUS::MIDLINE_POSITION_PX", lambda x: x.cell_point.midline_position_px),
-            ("FOCUS::OFFSET_FROM_MIDLINE_PX", lambda x: x.cell_point.offset_from_midline_px),
+            (
+                "FOCUS::OFFSET_FROM_MIDLINE_PX",
+                lambda x: x.cell_point.offset_from_midline_px,
+            ),
             ("FOCUS::MIDLINE_POSITION_UM", lambda x: x.midline_position_um),
             ("FOCUS::MIDLINE_POSITION_POL_UM", lambda x: x.midline_position_pol_um),
             ("FOCUS::OFFSET_FROM_MIDLINE_UM", lambda x: x.offset_from_midline_um),
             ("CELL::MIDLINE_LENGTH_UM", lambda x: x.cell_midline_length_um),
         ]
 
-    def csv_column_names():
+    @classmethod
+    def csv_column_names(cls):
         return [name for name, _ in Focus.csv_columns()]
 
     def csv_column_values(self):

@@ -14,6 +14,7 @@ def index_by_id(items):
         items_by_id[item.id] = item
     return items_by_id
 
+
 class CellLayer:
     id: str
     cell: Cell
@@ -38,7 +39,8 @@ class CellLayer:
         self.layer = layer
         self.props = SimpleNamespace() if props is None else props
 
-    def csv_columns():
+    @classmethod
+    def csv_columns(cls):
         return [
             ("CELL_LAYER::ID", lambda x: x.id),
             ("CELL::ID", lambda x: x.cell.id),
@@ -46,10 +48,11 @@ class CellLayer:
             ("LAYER::INDEX", lambda x: x.layer.index),
             ("FOV::DIR", lambda x: x.cell.fov.dir_str()),
             ("FOV::GROUP", lambda x: x.cell.fov.group),
-            ("FOV::DATE", lambda x: x.fov.date)
+            ("FOV::DATE", lambda x: x.fov.date),
         ]
 
-    def csv_column_names():
+    @classmethod
+    def csv_column_names(cls):
         return [name for name, _ in CellLayer.csv_columns()]
 
     def csv_column_values(self):

@@ -8,6 +8,7 @@ import seaborn as sns
 DEFAULT_POSITION_KEY = "FOCUS::MIDLINE_POSITION_POL_UM"
 DEFAULT_CELL_LENGTH_KEY = "CELL::MIDLINE_LENGTH_UM"
 
+
 def colorbar(ax, cmap, norm):
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
     sm.set_array([])
@@ -15,7 +16,7 @@ def colorbar(ax, cmap, norm):
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="2.5%", pad=0.1)
     return plt.colorbar(sm, cax=cax)
-    
+
 
 def plot_lengthwise_scatter(
     foci_df_seq,
@@ -41,7 +42,7 @@ def plot_lengthwise_scatter(
     scatter_fn(
         ax,
         all,
-        cmap = cmap,
+        cmap=cmap,
         position_key=position_key,
         cell_length_key=cell_length_key,
     )

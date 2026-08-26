@@ -9,14 +9,16 @@ from src.quant.ezmaps import locate
 from .stepwise_plot import plot_detected_foci
 from .config import FocusDetectionConfig
 
+
 def create_circle_mask(shape, center, radius):
 
-    grids = np.ogrid[:shape[0], :shape[1]]
+    grids = np.ogrid[: shape[0], : shape[1]]
     dist_from_center = np.sqrt(
         (grids[0] - center[0]) ** 2 + (grids[1] - center[1]) ** 2
     )
     mask = dist_from_center <= radius
     return mask
+
 
 def detect_foci(
     cell: Cell,
@@ -24,7 +26,7 @@ def detect_foci(
     fluor_layers_data: Sequence[FluorLayerData | None],
     dilated_labels: np.ndarray,
     config: FocusDetectionConfig,
-    stepwise_figure_dest = None
+    stepwise_figure_dest=None,
 ) -> tuple[CellLayer, list[Focus]]:
     """Returns ``(cell_layer, foci)``.
 
@@ -61,16 +63,16 @@ def detect_foci(
     num_foci = len(blobs)
 
     cell_layer = CellLayer(
-        cell, 
-        layer, 
+        cell,
+        layer,
         SimpleNamespace(
             num_foci=num_foci,
-            detection_threshold = fluor_layer_data.detection_threshold,
-            detection_threshold_method = config.detection_threshold_method,
-            detection_threshold_formula = 
-                f"{str(config.absolute_detection_threshold)}" if config.detection_threshold_method == "absolute"
-                else f"median + {str(config.IQR_multiple)} · IQR"
-        )
+            detection_threshold=fluor_layer_data.detection_threshold,
+            detection_threshold_method=config.detection_threshold_method,
+            detection_threshold_formula=f"{str(config.absolute_detection_threshold)}"
+            if config.detection_threshold_method == "absolute"
+            else f"median + {str(config.IQR_multiple)} · IQR",
+        ),
     )
 
     foci = []
@@ -86,12 +88,10 @@ def detect_foci(
             masked_fluor.shape,
             center=coordinates,
             radius=2 * radius,
-        )       
+        )
         blob_mask[blob_grid] = 1
 
-        masked_focus = (
-            blob_mask * masked_fluor
-        )
+        masked_focus = blob_mask * masked_fluor
 
         focus_area = np.sum((masked_focus != 0).astype(np.float32))
         focus_tot_intensity = np.sum(masked_focus)
@@ -105,23 +105,17 @@ def detect_foci(
                 i,
                 cell_point,
                 SimpleNamespace(
-                    dim_0_coordinate = coordinates[0],
-                    dim_1_coordinate = coordinates[1],
+                    dim_0_coordinate=coordinates[0],
+                    dim_1_coordinate=coordinates[1],
                     radius=radius,
                     area=focus_area,
                     tot_intensity=focus_tot_intensity,
-                    max_intensity=focus_max_intensity
+                    max_intensity=focus_max_intensity,
                 ),
             )
         )
 
     if stepwise_figure_dest is not None:
-        plot_detected_foci(
-            cell,
-            layer,
-            fluor_layer_data,
-            foci,
-            stepwise_figure_dest
-        )
+        plot_detected_foci(cell, layer, fluor_layer_data, foci, stepwise_figure_dest)
 
     return cell_layer, foci

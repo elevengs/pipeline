@@ -33,7 +33,7 @@ def cell_layers_from_dataframe(
         cell = cells_by_id[cell_id]
 
         layers_by_index = {layer.index: layer for layer in cell.fov.layers}
-        layer_index = int(row["LAYER::INDEX"])
+        layer_index = int(row["LAYER::INDEX"])  # type: ignore
         if layer_index not in layers_by_index:
             raise ValueError(f"layer index {layer_index} was not found in FOV")
         layer = layers_by_index[layer_index]
@@ -46,9 +46,7 @@ def cell_layers_from_dataframe(
             )
 
         cell_layer = CellLayer(
-            cell,
-            layer,
-            props = row_to_properties(row, "CELL_LAYER::PROPS::")
+            cell, layer, props=row_to_properties(row, "CELL_LAYER::PROPS::")
         )
         row_id = str(row["CELL_LAYER::ID"])
         if row_id != cell_layer.id:

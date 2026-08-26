@@ -1,21 +1,24 @@
-from src.defs import Cell, CellLayer, Focus
 from pathlib import Path
 
 import pandas as pd
 
 from src.defs import (
+    Cell,
+    CellLayer,
+    Focus,
     cell_layers_to_dataframe,
     cells_to_dataframe,
     foci_to_dataframe,
 )
 
+
 def validate_biological_replicates(
     name: str,
-    dataframe: pd.DataFrame,
+    df: pd.DataFrame,
     minimum: int,
 ) -> None:
     """Require images from at least ``minimum`` distinct dates."""
-    unique_dates = pd.unique(dataframe["FOV::DATE"])
+    unique_dates = pd.unique(df["FOV::DATE"])  # type: ignore
 
     if len(unique_dates) < minimum:
         raise ValueError(
@@ -23,6 +26,7 @@ def validate_biological_replicates(
             f"(i.e. images from different dates) but found just "
             f"{len(unique_dates)}: {unique_dates}"
         )
+
 
 def make_final_dfs(
     cells: dict[str, Cell],
@@ -53,4 +57,4 @@ def make_final_dfs(
         channel_name: channel_foci_df.reset_index(drop=True)
         for channel_name, channel_foci_df in foci_df.groupby("LAYER::CHANNEL_NAME")
     }
-    return cells_df, cell_layers_df, foci_by_channel  # ty: ignore[invalid-return-type]
+    return cells_df, cell_layers_df, foci_by_channel  # ty: ignore[invalid-return-type] # type: ignore

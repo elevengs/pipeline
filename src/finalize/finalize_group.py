@@ -11,14 +11,12 @@ from .make_final_dfs import make_final_dfs
 
 
 def group_output_dir(out: Path, group: str) -> Path:
-    """Returns the output directory for one FOV group.
-    """
+    """Returns the output directory for one FOV group."""
     return out / group
 
 
 def sources_by_group(sources: list[Path], root: Path) -> dict[str, list[Path]]:
-    """Returns a ``dict`` with metadata-defined experimental groups as keys and lists of sources as values.
-    """
+    """Returns a ``dict`` with metadata-defined experimental groups as keys and lists of sources as values."""
     result: dict[str, list[Path]] = {}
     for source in sources:
         fov = load(source, root)
@@ -37,16 +35,10 @@ def make_group_outputs(
     max_workers: int,
     enable_spideymaps: bool,
 ) -> None:
-    """Returns nothing, but creates finalized outputs for one metadata-defined group.
-    """
+    """Returns nothing, but creates finalized outputs for one metadata-defined group."""
 
     cells, cell_layers, foci = batch_inventory_from_CSVs(
-        sources,
-        root,
-        cells_dir,
-        cell_layers_dir,
-        foci_dir,
-        max_workers
+        sources, root, cells_dir, cell_layers_dir, foci_dir, max_workers
     )
 
     cells_df, cell_layers_df, foci_by_channel = make_final_dfs(
@@ -62,7 +54,9 @@ def make_group_outputs(
 
     for channel_name, foci_df in foci_by_channel.items():
         channel_out = out / channel_name
-        channel_cell_layers_df = cell_layers_df[cell_layers_df["LAYER::CHANNEL_NAME"] == channel_name]
+        channel_cell_layers_df = cell_layers_df[
+            cell_layers_df["LAYER::CHANNEL_NAME"] == channel_name
+        ]
         save_all_plots(cells_df, channel_cell_layers_df, foci_df, channel_out)
 
     if not enable_spideymaps:
