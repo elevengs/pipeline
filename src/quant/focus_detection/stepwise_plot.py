@@ -56,8 +56,7 @@ def plot_detected_foci(
             axes[i].imshow(crop(x))
 
         for _, focus in enumerate(foci):
-            coordinate = focus.props.coordinate
-            center = (coordinate[1], coordinate[0])
+            center = (focus.props.dim_1_coordinate, focus.props.dim_0_coordinate)
             c = plt.Circle(  # type: ignore (bug)
                 center, focus.props.radius, linewidth=2, fill=False, color="red"
             )
