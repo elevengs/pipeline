@@ -1,4 +1,5 @@
 import hashlib
+from argparse import Namespace
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -30,6 +31,8 @@ class Channel:
 class Layer:
     channel: Channel
     index: int
+
+    additional_focus_detection_config: Namespace | None = None
 
     @property
     def name(self) -> str:

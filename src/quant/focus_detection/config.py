@@ -1,5 +1,5 @@
 from argparse import Namespace, ArgumentParser
-from dataclasses import dataclass
+from dataclasses import dataclass, fields, replace
 
 
 @dataclass(frozen=True, slots=True)
@@ -19,6 +19,22 @@ class FocusDetectionConfig:
     denoise_amount: float
     gaussian_sigma: float
     plot_crop_margin: int
+
+    def with_additional_config(
+        self, additional_config: Namespace | None
+    ) -> "FocusDetectionConfig":
+        if additional_config is None:
+            return self
+
+        overrides = vars(additional_config)
+        valid_fields = {field.name for field in fields(self)}
+        unknown_fields = set(overrides) - valid_fields
+        if unknown_fields:
+            raise ValueError(
+                "unsupported focus detection config option(s): "
+                + ", ".join(sorted(unknown_fields))
+            )
+        return replace(self, **overrides)
 
     @classmethod
     def from_args(cls, args: Namespace) -> "FocusDetectionConfig":

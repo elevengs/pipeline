@@ -1,4 +1,5 @@
 import json
+from argparse import Namespace
 from pathlib import Path
 from typing import Any
 
@@ -99,7 +100,22 @@ def layer_from_dict(layer_dict: dict, index: int) -> Layer:
     if not isinstance(kind, str):
         raise ValueError('channel information must include a string "kind"')
 
-    return Layer(Channel(name, kind), index)
+    additional_focus_detection_config_json = layer_dict.get(
+        "additional_focus_detection_config"
+    )
+    additional_focus_detection_config = None
+    if additional_focus_detection_config_json is not None:
+        if not isinstance(additional_focus_detection_config_json, dict):
+            raise ValueError('"additional_focus_detection_config" must be a dictionary')
+        additional_focus_detection_config = Namespace()
+        for key, value in additional_focus_detection_config_json.items():
+            setattr(additional_focus_detection_config, key, value)
+
+    return Layer(
+        Channel(name, kind),
+        index,
+        additional_focus_detection_config=additional_focus_detection_config,
+    )
 
 
 def layers_from_meta(meta: dict) -> list[Layer]:
