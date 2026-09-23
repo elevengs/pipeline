@@ -44,6 +44,17 @@ class Focus:
         return self.cell_layer.layer
 
     @property
+    def vector_from_centroid_px(self):
+        return self.cell_point.vector_from_centroid_px
+
+    @property
+    def vector_from_centroid_um(self):
+        return (
+            self.vector_from_centroid_px
+            * self.fov.image_dimensions.microns_per_pixel
+        )
+
+    @property
     def midline_position_um(self):
         return (
             self.cell_point.midline_position_px
@@ -102,6 +113,10 @@ class Focus:
             ("FOCUS::MIDLINE_POSITION_UM", lambda x: x.midline_position_um),
             ("FOCUS::MIDLINE_POSITION_POL_UM", lambda x: x.midline_position_pol_um),
             ("FOCUS::OFFSET_FROM_MIDLINE_UM", lambda x: x.offset_from_midline_um),
+            ("FOCUS::VECTOR_FROM_CENTROID_COORD_0_PX", lambda x: x.vector_from_centroid_px[0]),
+            ("FOCUS::VECTOR_FROM_CENTROID_COORD_1_PX", lambda x: x.vector_from_centroid_px[1]),
+            ("FOCUS::VECTOR_FROM_CENTROID_COORD_0_UM", lambda x: x.vector_from_centroid_um[0]),
+            ("FOCUS::VECTOR_FROM_CENTROID_COORD_1_UM", lambda x: x.vector_from_centroid_um[1]),
             ("CELL::MIDLINE_LENGTH_UM", lambda x: x.cell_midline_length_um),
         ]
 

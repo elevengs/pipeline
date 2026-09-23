@@ -5,10 +5,12 @@ from .defs import CellMap
 class CellPoint:
     midline_position_px: float
     offset_from_midline_px: float
+    vector_from_centroid_px: np.ndarray
 
-    def __init__(self, midline_position_px: float, offset_from_midline_px: float):
+    def __init__(self, midline_position_px: float, offset_from_midline_px: float, vector_from_centroid_px: np.ndarray):
         self.midline_position_px = midline_position_px
         self.offset_from_midline_px = offset_from_midline_px
+        self.vector_from_centroid_px = vector_from_centroid_px
 
 
 # Given a CellMap, find where it would land on the midline and
@@ -76,4 +78,8 @@ def locate(cell_map: CellMap, point: np.ndarray, rounds=5) -> CellPoint:
     normal = np.array([-tangent[1], tangent[0]])
     offset_from_midline = np.dot(point - midline_point, normal)
 
-    return CellPoint(float(al), float(offset_from_midline))
+    return CellPoint(
+        float(al),
+        float(offset_from_midline),
+        np.asarray(point, dtype=float) - cell_map.centroid,
+    )

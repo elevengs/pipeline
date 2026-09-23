@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 from src.quant.ezmaps import CellPoint
@@ -53,6 +54,13 @@ def foci_from_dataframe(
         cell_point = CellPoint(
             midline_position_px=row["FOCUS::MIDLINE_POSITION_PX"],  # type: ignore
             offset_from_midline_px=row["FOCUS::OFFSET_FROM_MIDLINE_PX"],  # type: ignore
+            vector_from_centroid_px=np.asarray(
+                [
+                    row["FOCUS::VECTOR_FROM_CENTROID_COORD_0_PX"],
+                    row["FOCUS::VECTOR_FROM_CENTROID_COORD_1_PX"],
+                ],
+                dtype=float,
+            ),
         )
 
         focus = Focus(cell_layer, int(row["FOCUS::INDEX"]), cell_point)  # type: ignore

@@ -57,7 +57,16 @@ def make_group_outputs(
         channel_cell_layers_df = cell_layers_df[
             cell_layers_df["LAYER::CHANNEL_NAME"] == channel_name
         ]
-        save_all_plots(cells_df, channel_cell_layers_df, foci_df, channel_out)
+        channel_foci_df = foci_df[
+            foci_df["LAYER::CHANNEL_NAME"] == channel_name
+        ]
+        save_all_plots(
+            cells,
+            cells_df,
+            channel_cell_layers_df,
+            channel_foci_df,
+            channel_out
+        )
 
     if not enable_spideymaps:
         return
