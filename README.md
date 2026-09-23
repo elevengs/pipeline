@@ -23,10 +23,11 @@ of bacterial cells from phase contrast and fluorescence microscopy images.
    nix develop
    ```
 
-   **UV:**
+   **UV (RECOMMENDED):**
 
    ```bash
    uv venv .venv
+   uv sync
    source .venv/bin/activate
    ```
 
