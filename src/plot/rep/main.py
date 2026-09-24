@@ -22,6 +22,7 @@ def plot_rep_stratum(
     coordinate_1_key: str,
     cmap,
     colorizer,
+    symmetrize: str = "xy"
 ):
     """Plot one representative cell and its foci on ``ax``."""
     rep_map, transforms = maps_to_rep_map(cells)
@@ -40,6 +41,19 @@ def plot_rep_stratum(
             continue
 
         rep_points.append(transforms[cell_id] @ vector_from_centroid)
+
+    # If need be, mirror the points across the x and y axes
+    if symmetrize.find("x") >= 0:
+        rep_points = [
+            *rep_points,
+            *[[-1 * point[0], point[1]] for point in rep_points]
+        ]
+    if symmetrize.find("y") >= 0:
+        rep_points = [
+            *rep_points,
+            *[[point[0], -1 * point[1]] for point in rep_points]
+        ]
+
 
     if rep_points:
         points = np.asarray(rep_points)[:, [1, 0]].T
@@ -139,7 +153,7 @@ def plot_rep(
     # as tall as the panels, their gaps, and the small scalebar region require.
     left = 0.04
     right = 0.82
-    panel_bottom = 0.10
+    panel_bottom = 0.55
     panel_width = figure_width * (right - left)
     data_aspect = np.ptp(all_geometry[:, 0]) / np.ptp(all_geometry[:, 1])
     panel_height = panel_width * data_aspect
@@ -170,9 +184,9 @@ def plot_rep(
     colorbar.ax.tick_params(labelsize=12)
 
     scalebar_ax = fig_rep.add_axes(
-        (left, 0.005 / figure_height, 0.25, 0.06 / figure_height)
+        (left, 0.04 / figure_height, right - left, 0.18 / figure_height)
     )
-    scalebar_ax.set_xlim(0, 2)
+    scalebar_ax.set_xlim(x_limits)
     scalebar_ax.set_ylim(0, 1)
     scalebar_ax.axis("off")
     scalebar_ax.add_artist(
@@ -184,7 +198,7 @@ def plot_rep(
             color="black",
             box_alpha=0,
             width_fraction=0.06,
-            location="center",
+            location="lower left",
             rotation="horizontal-only",
             font_properties={"size": 10},
         )

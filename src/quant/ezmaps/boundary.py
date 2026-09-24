@@ -18,7 +18,7 @@ def boundary_points(mask: np.ndarray) -> np.ndarray:
     The index ``0`` along dimension ``1`` contains the row indices, whereas index ``1`` contains
     the column indices.
     """
-    return find_contours(mask, 0.5)[0]
+    return max(find_contours(mask, 0.5), key=len)
 
 
 def fit_boundary(
