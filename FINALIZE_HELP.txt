@@ -1,0 +1,27 @@
+usage: finalize [options]
+
+positional arguments:
+  out                   Directory where finalized outputs will be written.
+
+options:
+  -h, --help            show this help message and exit
+  -i INCLUDE [INCLUDE ...], --include INCLUDE [INCLUDE ...]
+                        Include source ND2 or TIFF files; default:
+                        ['**/*.nd2'].
+  -e EXCLUDE [EXCLUDE ...], --exclude EXCLUDE [EXCLUDE ...]
+                        Exclude files or directories using glob patterns;
+                        default: [].
+  --root ROOT           Root directory against which include, exclude, and
+                        output paths are resolved.
+  --enable-spideymaps   Also generate Spideymaps atlas data and plots under
+                        OUT/spideymaps.
+  --cells-dir CELLS_DIR
+                        Directory containing cell CSVs written by quant.
+  --cell-layers-dir CELL_LAYERS_DIR
+                        Directory containing cell-layer CSVs written by quant.
+  --foci-dir FOCI_DIR   Directory containing foci CSVs written by quant.
+  --min-bio-reps MIN_BIO_REPS
+                        Minimum biological replicates per group; default: 3.
+  --max-workers MAX_WORKERS
+                        Number of worker threads; set to 0 to use the main
+                        thread.
