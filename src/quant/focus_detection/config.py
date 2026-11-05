@@ -39,7 +39,7 @@ class FocusDetectionConfig:
     @classmethod
     def from_args(cls, args: Namespace) -> "FocusDetectionConfig":
         threshold_method = args.detection_threshold_method
-        if threshold_method not in ("absolute", "IQR_multiple"):
+        if threshold_method not in ("absolute", "IQR_multiple", "yen"):
             raise ValueError(
                 f"unsupported detection threshold method {threshold_method}"
             )

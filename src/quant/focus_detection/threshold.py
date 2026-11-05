@@ -1,5 +1,5 @@
 import numpy as np
-
+from skimage.filters import threshold_yen
 from src.defs import FOV
 from .config import FocusDetectionConfig
 
@@ -41,6 +41,15 @@ def get_detection_threshold(
         detection_threshold = (
             median_cell_fluor + config.IQR_multiple * IQR_cell_fluor
         )  # how bright a focus needs to be to detect
+
+        return detection_threshold
+    elif config.detection_threshold_method == "yen":
+        if np.max(foreground) < 1:
+            return 1
+        foreground_fluor = fluor_final[foreground > 0]
+        detection_threshold = threshold_yen(
+            foreground_fluor,
+        )
 
         return detection_threshold
     else:
