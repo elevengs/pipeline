@@ -19,6 +19,13 @@ class FocusDetectionConfig:
     denoise_amount: float
     gaussian_sigma: float
     plot_crop_margin: int
+    detection_threshold_scope: str = "fov"
+
+    def __post_init__(self):
+        if self.detection_threshold_scope not in ("cell", "fov"):
+            raise ValueError(
+                f"unsupported detection threshold scope {self.detection_threshold_scope}"
+            )
 
     def with_additional_config(
         self, additional_config: Namespace | None
@@ -46,6 +53,7 @@ class FocusDetectionConfig:
 
         return cls(
             detection_threshold_method=threshold_method,
+            detection_threshold_scope=args.detection_threshold_scope,
             absolute_detection_threshold=args.absolute_detection_threshold,
             IQR_multiple=args.IQR_multiple,
             min_sigma=args.detect_min_sigma,
@@ -83,7 +91,18 @@ def add_detection_config_args(parser: ArgumentParser):
         "--detection-threshold-method",
         type=str,
         default=DEFAULT_DETECTION_CONFIG.detection_threshold_method,
-        help=f"What method to use to determine the intensity threshold for focus detection. 'absolute' will use the value provided for --absolute-detection-threshold, and 'IQR_multiple' will use the median plus a multiple of the interquartile range of the pixel intensities inside cell boundaries; default: {DEFAULT_DETECTION_CONFIG.detection_threshold_method}",
+        help=f"Method for the focus detection intensity threshold: 'absolute' uses --absolute-detection-threshold, 'IQR_multiple' uses the median plus a multiple of the interquartile range, and 'yen' uses Yen's method. IQR and Yen use pixels selected by --detection-threshold-scope; default: {DEFAULT_DETECTION_CONFIG.detection_threshold_method}.",
+    )
+    parser.add_argument(
+        "--detection-threshold-scope",
+        choices=("cell", "fov"),
+        default=DEFAULT_DETECTION_CONFIG.detection_threshold_scope,
+        help=(
+            "Pixels used for Yen and IQR thresholds: 'cell' uses only the current "
+            "cell; 'fov' uses foreground pixels from all cells and computes the "
+            "threshold once per fluorescence layer per FOV. Does not affect "
+            f"absolute thresholds; default: {DEFAULT_DETECTION_CONFIG.detection_threshold_scope}."
+        ),
     )
     parser.add_argument(
         "--absolute-detection-threshold",
@@ -95,7 +114,7 @@ def add_detection_config_args(parser: ArgumentParser):
         "--IQR-multiple",
         type=float,
         default=DEFAULT_DETECTION_CONFIG.IQR_multiple,
-        help=f"Multiple of the IQR above the median fluorescence intensity inside the foreground (all cells) which a focus must surpass to qualify for detection. Decrease this to detect dimmer foci; default: {str(DEFAULT_DETECTION_CONFIG.IQR_multiple)}.",
+        help=f"Multiple of the IQR above the median fluorescence intensity within the selected detection threshold scope which a focus must surpass to qualify for detection. Decrease this to detect dimmer foci; default: {str(DEFAULT_DETECTION_CONFIG.IQR_multiple)}.",
     )
     parser.add_argument(
         "--detect-min-sigma",

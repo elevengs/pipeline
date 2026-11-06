@@ -63,6 +63,15 @@ of bacterial cells from phase contrast and fluorescence microscopy images.
 
 8. Run the third cell to produce the final output.
 
+Set `detection_threshold_scope="cell"` in `FocusDetectionConfig` (or pass
+`--detection-threshold-scope cell` on the command line) to calculate Yen or IQR
+thresholds from only the cell being analyzed. The default, `"fov"`, uses
+foreground pixels from all cells and calculates one threshold per fluorescence
+layer per FOV, reused for every cell. Both scopes use the original cell labels,
+before expansion for focus assignment. Absolute thresholds are unaffected.
+Individual layers can override this with `"detection_threshold_scope": "cell"`
+in their metadata's `additional_focus_detection_config` dictionary.
+
 ### What is created?
 
 #### `batch_inventory`

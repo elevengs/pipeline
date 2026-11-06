@@ -8,6 +8,7 @@ from src.defs import Cell, CellLayer, Focus, Layer
 from src.quant.ezmaps import locate
 from .stepwise_plot import plot_detected_foci
 from .config import FocusDetectionConfig
+from .threshold import get_detection_threshold
 
 
 def create_circle_mask(shape, center, radius):
@@ -45,6 +46,19 @@ def detect_foci(
     if fluor_layer_data is None:
         raise Exception("attempting to detect foci in cell on a non-fluorescence layer")
 
+    if config.detection_threshold_scope == "cell":
+        detection_threshold = get_detection_threshold(
+            cell.fov,
+            fluor_layer_data.fluor_final,
+            cell.fov.labels,
+            config,
+            cell=cell,
+        )
+    else:
+        detection_threshold = fluor_layer_data.fov_detection_threshold
+        if detection_threshold is None:
+            raise ValueError("FOV detection threshold was not computed for this layer")
+
     crop = cell.map.bounding_box.crop
 
     masked_fluor = crop(fluor_layer_data.fluor_final) * (
@@ -56,7 +70,7 @@ def detect_foci(
         min_sigma=config.min_sigma,
         max_sigma=config.max_sigma,
         num_sigma=config.num_sigma,
-        threshold=fluor_layer_data.detection_threshold,
+        threshold=detection_threshold,
         overlap=config.overlap,
     )
 
@@ -67,10 +81,13 @@ def detect_foci(
         layer,
         SimpleNamespace(
             num_foci=num_foci,
-            detection_threshold=fluor_layer_data.detection_threshold,
+            detection_threshold=detection_threshold,
             detection_threshold_method=config.detection_threshold_method,
+            detection_threshold_scope=config.detection_threshold_scope,
             detection_threshold_formula=f"{str(config.absolute_detection_threshold)}"
             if config.detection_threshold_method == "absolute"
+            else "Yen"
+            if config.detection_threshold_method == "yen"
             else f"median + {str(config.IQR_multiple)} · IQR",
         ),
     )
@@ -116,6 +133,14 @@ def detect_foci(
         )
 
     if stepwise_figure_dest is not None:
-        plot_detected_foci(cell, layer, fluor_layer_data, foci, stepwise_figure_dest)
+        plot_detected_foci(
+            cell,
+            layer,
+            fluor_layer_data,
+            foci,
+            stepwise_figure_dest,
+            detection_threshold=detection_threshold,
+            config = config
+        )
 
     return cell_layer, foci

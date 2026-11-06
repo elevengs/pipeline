@@ -7,6 +7,7 @@ from src.defs import Cell, Focus, Layer
 from src.quant.focus_detection.fluor_layer import FluorLayerData
 from src.util.misc import FIGURE_LOCK
 from src.util.save import save_fig
+from .config import FocusDetectionConfig
 
 
 def plot_detected_foci(
@@ -15,12 +16,15 @@ def plot_detected_foci(
     fluor_layer_data: FluorLayerData,
     foci: list[Focus],
     dest: Path,
+    *,
+    detection_threshold: float,
+    config: FocusDetectionConfig
 ):
     fov = cell.fov
     crop = cell.map.bounding_box.crop
 
     thresholded_fluor_final = fluor_layer_data.fluor_final * (
-        fluor_layer_data.fluor_final > fluor_layer_data.detection_threshold
+        fluor_layer_data.fluor_final > detection_threshold
     ).astype(np.float32)
 
     plot_titles_and_contents = [
@@ -28,7 +32,7 @@ def plot_detected_foci(
         ("background corrected", fluor_layer_data.fluor_minus_bg),
         ("denoised", fluor_layer_data.fluor_minus_bg_sharp),
         ("final", fluor_layer_data.fluor_final),
-        ("thresholded", thresholded_fluor_final),
+        (f"thresholded \n >{round(detection_threshold, 2)}, method = {config.detection_threshold_method}, per {config.detection_threshold_scope}", thresholded_fluor_final),
         ("map", cell.mask),
         ("phase", fov.phase_data()),
     ]
@@ -57,7 +61,7 @@ def plot_detected_foci(
 
         for _, focus in enumerate(foci):
             center = (focus.props.dim_1_coordinate, focus.props.dim_0_coordinate)
-            c = plt.Circle(  # type: ignore (bug)
+            c = plt.Circle(
                 center, focus.props.radius, linewidth=2, fill=False, color="red"
             )
             axes[SHOW_BLOBS_ON_IDX].add_patch(c)
