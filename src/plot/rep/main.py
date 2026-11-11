@@ -1,95 +1,47 @@
-
-from pathlib import Path
+from collections.abc import Callable
 
 import numpy as np
-import seaborn as sns
 from matplotlib import pyplot as plt
-from matplotlib.colorizer import Colorizer
+from matplotlib.axes import Axes
+from matplotlib.cm import ScalarMappable
 from matplotlib.figure import Figure
 from matplotlib_scalebar.scalebar import ScaleBar
-from pandas import DataFrame
-from scipy.stats import gaussian_kde
 
 from src.defs import Cell
+from src.quant.ezmaps.defs import CellMap
 from src.quant.ezmaps.rep_map import maps_to_rep_map
+
+RepPlotter = Callable[[Axes, list[Cell], CellMap, dict[str, np.ndarray]], object]
 
 
 def plot_rep_stratum(
-    ax,
+    ax: Axes,
     cells: list[Cell],
-    foci_df: DataFrame,
-    coordinate_0_key: str,
-    coordinate_1_key: str,
-    cmap,
-    colorizer,
-    symmetrize: str = "xy"
-):
-    """Plot one representative cell and its foci on ``ax``."""
+    plot_fn: RepPlotter | None = None,
+) -> CellMap:
+    """Draw an overlay (like foci or intensity), then the representative cell outline."""
     rep_map, transforms = maps_to_rep_map(cells)
-
-    rep_points = []
-    for _, focus in foci_df.iterrows():
-        cell_id = str(focus["CELL::ID"])
-        if cell_id not in transforms:
-            continue
-
-        vector_from_centroid = np.asarray(
-            [focus[coordinate_0_key], focus[coordinate_1_key]],
-            dtype=float,
-        )
-        if not np.all(np.isfinite(vector_from_centroid)):
-            continue
-
-        rep_points.append(transforms[cell_id] @ vector_from_centroid)
-
-    # If need be, mirror the points across the x and y axes
-    if symmetrize.find("x") >= 0:
-        rep_points = [
-            *rep_points,
-            *[[-1 * point[0], point[1]] for point in rep_points]
-        ]
-    if symmetrize.find("y") >= 0:
-        rep_points = [
-            *rep_points,
-            *[[point[0], -1 * point[1]] for point in rep_points]
-        ]
+    if plot_fn is not None:
+        plot_fn(ax, cells, rep_map, transforms)
 
 
-    if rep_points:
-        points = np.asarray(rep_points)[:, [1, 0]].T
-        try:
-            density = gaussian_kde(points)(points)
-        except (np.linalg.LinAlgError, ValueError):
-            density = np.ones(points.shape[1])
-
-        order = np.argsort(density)
-        ax.scatter(
-            points[0, order],
-            points[1, order],
-            c=density[order],
-            s=5,
-            edgecolor="none",
-            colorizer=colorizer,
-        )
-
-    # Draw the outline after the points for visibility.
     rep_map.show(show_mask=False, ax=ax, render=False, scale=1.0, extend_midline_by=0)
-    return rep_map, np.asarray(rep_points)
+    return rep_map
 
 
 def plot_rep(
     cells: dict[str, Cell],
-    cell_layers_df: DataFrame,
-    foci_df: DataFrame,
-    out: Path,
-    coordinate_0_key: str = "FOCUS::VECTOR_FROM_CENTROID_COORD_0_UM",
-    coordinate_1_key: str = "FOCUS::VECTOR_FROM_CENTROID_COORD_1_UM",
-    cmap=sns.color_palette("plasma", as_cmap=True),
+    plot_fn: RepPlotter | None = None,
+    *,
+    mappable: ScalarMappable | None = None,
+    colorbar_label: str = "",
     n_strata=4,
     outline_margin=0.01,
     subplot_hspace=0.08,
     colorbar_fraction=0.05,
 ) -> Figure:
+    """Plot representative cells grouped by length.
+    """
     if n_strata < 1:
         raise ValueError("n_strata must be at least 1")
 
@@ -98,39 +50,28 @@ def plot_rep(
         raise ValueError("at least one cell is required")
 
     cell_list.sort(
-        key=lambda cell: cell.map.midline_length
-        * cell.fov.image_dimensions.microns_per_pixel
+        key=lambda cell: (
+            cell.map.midline_length * cell.fov.image_dimensions.microns_per_pixel
+        )
     )
     strata = np.array_split(cell_list, min(n_strata, len(cell_list)))
-    norm = plt.Normalize(vmin=0, vmax=4)
-    colorizer = Colorizer(cmap=cmap, norm=norm)
     figure_width = 5.0
-    fig_rep, axes = plt.subplots(len(strata), 1, figsize=(figure_width, 1), squeeze=False)
+    fig_rep, axes = plt.subplots(
+        len(strata), 1, figsize=(figure_width, 1), squeeze=False
+    )
 
     rep_strata = []
     for ax, stratum in zip(axes[:, 0], strata):
-        rep_strata.append(
-            plot_rep_stratum(
-            ax,
-            list(stratum),
-            foci_df,
-            coordinate_0_key,
-            coordinate_1_key,
-            cmap,
-            colorizer,
-            )
-        )
+        rep_strata.append(plot_rep_stratum(ax, list(stratum), plot_fn))
         ax.set_aspect("equal")
         for spine in ax.spines.values():
             spine.set_visible(False)
 
     # Use identical limits for every stratum so their outlines are directly
-    # comparable.  Add a small margin for the outline and focus points.
+    # comparable.  Add a small margin for the outline.
     all_boundaries = [
-        rep_map.boundary_by_arc_length(
-            np.linspace(0, rep_map.perimeter, num=300)
-        )
-        for rep_map, _ in rep_strata
+        rep_map.boundary_by_arc_length(np.linspace(0, rep_map.perimeter, num=300))
+        for rep_map in rep_strata
     ]
     all_geometry = np.concatenate(all_boundaries)
     x_margin = np.ptp(all_geometry[:, 1]) * outline_margin
@@ -174,14 +115,18 @@ def plot_rep(
             )
         )
 
-    scalar_mappable = plt.cm.ScalarMappable(norm=norm, cmap=cmap)
-    scalar_mappable.set_array([])
-    colorbar_ax = fig_rep.add_axes(
-        (0.86, panel_bottom / figure_height, colorbar_fraction, panel_total_height / figure_height)
-    )
-    colorbar = fig_rep.colorbar(scalar_mappable, cax=colorbar_ax)
-    colorbar.set_label("Probability density", fontsize=11, rotation=270, labelpad=20)
-    colorbar.ax.tick_params(labelsize=12)
+    if mappable is not None:
+        colorbar_ax = fig_rep.add_axes(
+            (
+                0.86,
+                panel_bottom / figure_height,
+                colorbar_fraction,
+                panel_total_height / figure_height,
+            )
+        )
+        colorbar = fig_rep.colorbar(mappable, cax=colorbar_ax)
+        colorbar.set_label(colorbar_label, fontsize=11, rotation=270, labelpad=20)
+        colorbar.ax.tick_params(labelsize=12)
 
     scalebar_ax = fig_rep.add_axes(
         (left, 0.04 / figure_height, right - left, 0.18 / figure_height)

@@ -61,6 +61,7 @@ def make_group_outputs(
             foci_df["LAYER::CHANNEL_NAME"] == channel_name
         ]
         save_all_plots(
+            channel_name,
             cells,
             cells_df,
             channel_cell_layers_df,

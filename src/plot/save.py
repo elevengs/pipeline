@@ -4,7 +4,8 @@ from pathlib import Path
 from pandas import DataFrame
 
 from src.defs import Cell
-from src.plot.rep.main import plot_rep
+from src.plot.rep.foci import plot_rep_foci
+from src.plot.rep.intensity import plot_rep_intensity
 from src.util.misc import mkdir_p
 from src.util.save import save_fig
 from .cell_length_hist import plot_cell_length
@@ -23,11 +24,9 @@ def save_foci_plots(
     position_key: str,
     cell_length_key: str,
 ):
-    fig_rep = plot_rep(
+    fig_rep_foci = plot_rep_foci(
         cells,
-        cell_layers_df,
         foci_df,
-        out,
     )
     fig_cano = plot_lengthwise_scatter(
         [foci_df],
@@ -51,7 +50,7 @@ def save_foci_plots(
 
     save_folder = out
     mkdir_p(save_folder)
-    save_fig(fig_rep, save_folder.joinpath("rep"))
+    save_fig(fig_rep_foci, save_folder.joinpath("rep_foci"))
     save_fig(fig_cano, save_folder.joinpath("long_axis_position_vs_cell_length"))
     save_fig(fig_foci, save_folder.joinpath("long_axis_position_vs_foci_number"))
     save_fig(
@@ -59,6 +58,7 @@ def save_foci_plots(
     )
     save_fig(fig_num_foci, save_folder.joinpath("num_foci"))
 
+    plt.close(fig_rep_foci)
     plt.close(fig_cano)
     plt.close(fig_foci)
     plt.close(fig_intensity)
@@ -73,6 +73,7 @@ def save_cell_length_plot(lengths, out):
 
 
 def save_all_plots(
+    channel_name: str,
     cells,
     cells_df,
     cell_layers_df,
@@ -81,6 +82,10 @@ def save_all_plots(
     position_key=DEFAULT_POSITION_KEY,
     cell_length_key="CELL::MIDLINE_LENGTH_UM",
 ):
+    fig_rep_intensity = plot_rep_intensity(cells, channel_name)
+    mkdir_p(out)
+    save_fig(fig_rep_intensity, out.joinpath("rep_intensity"))
+    plt.close(fig_rep_intensity)
     save_foci_plots(
         cells,
         cell_layers_df,
