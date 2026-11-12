@@ -7,10 +7,12 @@ from src.quant.ezmaps.boundary import fit_boundary
 from src.quant.ezmaps.midline import midline
 from src.quant.ezmaps.pole import find_estimated_poles, find_true_poles
 from .defs import CellMap
-
+from astropy.stats import biweight_location
 
 def maps_to_rep_map(
-    cells: Iterable[Cell], n_theta=500
+    cells: Iterable[Cell], 
+    n_theta=500,
+    average_method = "tukey_biweight_location"
 ) -> tuple[CellMap, dict[str, np.ndarray]]:
     """Average cell maps after aligning their true poles.
 
@@ -82,19 +84,20 @@ def maps_to_rep_map(
         raise ValueError("no cell maps have usable pole coordinates")
 
     for rep_theta in rep_thetas:
-        total = np.zeros(2, dtype=float)
+        acc = []
+        total = [0.0, 0.0]
 
-        # Take the arithmetic mean of the position relative to the centroid
-        n_valid = 0
         for cell_id, cell_map, mpp in valid_cell_maps:
             pole_0 = cell_map.true_poles[0].theta
             src = cell_map.boundary_by_theta(pole_0 + rep_theta)
             M = linear_transformations[cell_id]
             dest = M @ ((src - cell_map.centroid) * mpp)
-            total += dest
-            n_valid += 1
+            acc.append(dest)
 
-        total /= n_valid
+        if average_method == "mean":
+            total = np.mean(acc, axis = 0)
+        elif average_method == "tukey_biweight_location":
+            total = biweight_location(acc, axis = 0)
 
         rep_boundary_pts.append(total)
 

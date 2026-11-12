@@ -68,6 +68,7 @@ def plot_intensity(
     grid_spacing_um: float,
     cmap,
     norm,
+    symmetrize = "xy"
 ):
     """Evaluate continuous-position intensity smoothing and draw an overlay.
 
@@ -108,6 +109,16 @@ def plot_intensity(
         points = vectors @ transforms[cell.id].T
         point_sets.append(points)
         value_sets.append(values)
+        if "x" in symmetrize:
+            mirrored_x = points.copy()
+            mirrored_x[:, 0] = (mirrored_x[:, 0] * -1)
+            point_sets.append(mirrored_x)
+            value_sets.append(values)
+        if "y" in symmetrize:
+            mirrored_y = points.copy()
+            mirrored_y[:, 1] = (mirrored_y[:, 1] * -1)
+            point_sets.append(mirrored_y)
+            value_sets.append(values)
 
     rows, cols = np.meshgrid(*coordinates, indexing="ij")
     queries = np.column_stack([rows.ravel(), cols.ravel()])
