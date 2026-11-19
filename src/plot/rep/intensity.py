@@ -1,5 +1,7 @@
 """Fluorescence intensity overlays from masked FOV pixels."""
 
+from src.plot.config import DEFAULT_PLOT_CONFIG
+
 from collections.abc import Callable
 from functools import partial
 
@@ -68,7 +70,7 @@ def plot_intensity(
     grid_spacing_um: float,
     cmap,
     norm,
-    symmetrize = "xy"
+    symmetrize = DEFAULT_PLOT_CONFIG.rep_intensity_symmetrize
 ):
     """Evaluate continuous-position intensity smoothing and draw an overlay.
 
@@ -155,10 +157,13 @@ def plot_rep_intensity(
     grid_spacing_um: float = 0.05,
     cmap="plasma",
     norm: Normalize | None = None,
-    n_strata=4,
+    n_strata=DEFAULT_PLOT_CONFIG.rep_intensity_n_strata,
     outline_margin=0.01,
     subplot_hspace=0.08,
     colorbar_fraction=0.05,
+    scalebar_size_um=DEFAULT_PLOT_CONFIG.rep_intensity_scalebar_size_um,
+    average_method=DEFAULT_PLOT_CONFIG.rep_intensity_average_method,
+    symmetrize=DEFAULT_PLOT_CONFIG.rep_intensity_symmetrize,
 ):
     """Plot raw fluorescence intensity averaged over aligned cell pixels.
 
@@ -175,8 +180,11 @@ def plot_rep_intensity(
     # Set limits after every stratum has been rendered, avoiding autoscaling
     # the shared norm to only the first stratum.
     vmin, vmax = shared_norm.vmin, shared_norm.vmax
-    shared_norm.vmin = 0 if vmin is None else vmin
-    shared_norm.vmax = 1 if vmax is None else vmax
+    with shared_norm.callbacks.blocked():
+        shared_norm.vmin = vmin if vmin is not None else (
+            min(0, vmax - 1) if vmax is not None else 0
+        )
+        shared_norm.vmax = vmax if vmax is not None else max(1, shared_norm.vmin + 1)
     artists = []
 
     def overlay(ax, stratum, rep_map, transforms):
@@ -191,6 +199,7 @@ def plot_rep_intensity(
                 grid_spacing_um=grid_spacing_um,
                 cmap=cmap,
                 norm=shared_norm,
+                symmetrize=symmetrize,
             )
         )
 
@@ -203,6 +212,8 @@ def plot_rep_intensity(
         outline_margin=outline_margin,
         subplot_hspace=subplot_hspace,
         colorbar_fraction=colorbar_fraction,
+        scalebar_size_um=scalebar_size_um,
+        average_method=average_method,
     )
     finite_values = [artist.get_array().compressed() for artist in artists]
     values = np.concatenate(finite_values)

@@ -25,3 +25,83 @@ options:
   --max-workers MAX_WORKERS
                         Number of worker threads; set to 0 to use the main
                         thread.
+  --lengthwise-scatter-intensity-colorbar-min LENGTHWISE_SCATTER_INTENSITY_COLORBAR_MIN
+                        Minimum colorbar value for the intensity lengthwise
+                        scatter plot - unset uses existing normalization;
+                        default: None.
+  --lengthwise-scatter-intensity-y-min LENGTHWISE_SCATTER_INTENSITY_Y_MIN
+                        Minimum cell length in micrometers for the intensity
+                        lengthwise scatter plot; default: 0.8.
+  --lengthwise-scatter-intensity-colorbar-max LENGTHWISE_SCATTER_INTENSITY_COLORBAR_MAX
+                        Maximum colorbar value for the intensity lengthwise
+                        scatter plot - unset uses existing normalization;
+                        default: None.
+  --lengthwise-scatter-intensity-y-max LENGTHWISE_SCATTER_INTENSITY_Y_MAX
+                        Maximum cell length in micrometers for the intensity
+                        lengthwise scatter plot; default: 2.1.
+  --lengthwise-scatter-kde-colorbar-min LENGTHWISE_SCATTER_KDE_COLORBAR_MIN
+                        Minimum colorbar value for the kde lengthwise scatter
+                        plot - unset uses existing normalization; default:
+                        0.0.
+  --lengthwise-scatter-kde-y-min LENGTHWISE_SCATTER_KDE_Y_MIN
+                        Minimum cell length in micrometers for the kde
+                        lengthwise scatter plot; default: 0.8.
+  --lengthwise-scatter-kde-colorbar-max LENGTHWISE_SCATTER_KDE_COLORBAR_MAX
+                        Maximum colorbar value for the kde lengthwise scatter
+                        plot - unset uses existing normalization; default:
+                        4.0.
+  --lengthwise-scatter-kde-y-max LENGTHWISE_SCATTER_KDE_Y_MAX
+                        Maximum cell length in micrometers for the kde
+                        lengthwise scatter plot; default: 2.1.
+  --lengthwise-scatter-num-foci-colorbar-min LENGTHWISE_SCATTER_NUM_FOCI_COLORBAR_MIN
+                        Minimum colorbar value for the num_foci lengthwise
+                        scatter plot - unset uses existing normalization;
+                        default: 1.
+  --lengthwise-scatter-num-foci-y-min LENGTHWISE_SCATTER_NUM_FOCI_Y_MIN
+                        Minimum cell length in micrometers for the num_foci
+                        lengthwise scatter plot; default: 0.8.
+  --lengthwise-scatter-num-foci-colorbar-max LENGTHWISE_SCATTER_NUM_FOCI_COLORBAR_MAX
+                        Maximum colorbar value for the num_foci lengthwise
+                        scatter plot - unset uses existing normalization;
+                        default: None.
+  --lengthwise-scatter-num-foci-y-max LENGTHWISE_SCATTER_NUM_FOCI_Y_MAX
+                        Maximum cell length in micrometers for the num_foci
+                        lengthwise scatter plot; default: 2.1.
+  --rep-foci-colorbar-min REP_FOCI_COLORBAR_MIN
+                        Minimum colorbar value for representative foci plots -
+                        unset uses existing normalization; default: 0.0.
+  --rep-foci-colorbar-max REP_FOCI_COLORBAR_MAX
+                        Maximum colorbar value for representative foci plots -
+                        unset uses existing normalization; default: 4.0.
+  --rep-foci-symmetrize {,x,y,xy}
+                        Axes to mirror across - use an empty string for no
+                        mirroring; default: xy.
+  --rep-foci-n-strata REP_FOCI_N_STRATA
+                        Number of cell-length strata for representative plots;
+                        default: 4.
+  --rep-foci-scalebar-size-um REP_FOCI_SCALEBAR_SIZE_UM
+                        Representative plot scalebar length in micrometers;
+                        default: 1.0.
+  --rep-foci-average-method {mean,tukey_biweight_location}
+                        Method for averaging representative cell geometry;
+                        default: tukey_biweight_location.
+  --rep-intensity-colorbar-min REP_INTENSITY_COLORBAR_MIN
+                        Minimum colorbar value for representative intensity
+                        plots - unset uses existing normalization; default:
+                        None.
+  --rep-intensity-colorbar-max REP_INTENSITY_COLORBAR_MAX
+                        Maximum colorbar value for representative intensity
+                        plots - unset uses existing normalization; default:
+                        None.
+  --rep-intensity-symmetrize {,x,y,xy}
+                        Axes to mirror across - use an empty string for no
+                        mirroring; default: xy.
+  --rep-intensity-n-strata REP_INTENSITY_N_STRATA
+                        Number of cell-length strata for representative plots;
+                        default: 4.
+  --rep-intensity-scalebar-size-um REP_INTENSITY_SCALEBAR_SIZE_UM
+                        Representative plot scalebar length in micrometers;
+                        default: 1.0.
+  --rep-intensity-average-method {mean,tukey_biweight_location}
+                        Method for averaging representative cell geometry;
+                        default: tukey_biweight_location.

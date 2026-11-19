@@ -111,10 +111,18 @@ def layer_from_dict(layer_dict: dict, index: int) -> Layer:
         for key, value in additional_focus_detection_config_json.items():
             setattr(additional_focus_detection_config, key, value)
 
+    additional_plot_config_json = layer_dict.get("additional_plot_config")
+    additional_plot_config = None
+    if additional_plot_config_json is not None:
+        if not isinstance(additional_plot_config_json, dict):
+            raise ValueError('"additional_plot_config" must be a dictionary')
+        additional_plot_config = Namespace(**additional_plot_config_json)
+
     return Layer(
         Channel(name, kind),
         index,
         additional_focus_detection_config=additional_focus_detection_config,
+        additional_plot_config=additional_plot_config,
     )
 
 

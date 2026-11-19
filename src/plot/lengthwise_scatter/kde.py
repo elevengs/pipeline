@@ -1,3 +1,5 @@
+from src.plot.config import DEFAULT_PLOT_CONFIG
+
 import numpy as np
 import seaborn as sns
 from matplotlib import pyplot as plt
@@ -13,8 +15,10 @@ def scatter_kde_colors(
     cmap=sns.color_palette("plasma", as_cmap=True),
     position_key=DEFAULT_POSITION_KEY,
     cell_length_key=DEFAULT_CELL_LENGTH_KEY,
+    colorbar_min=DEFAULT_PLOT_CONFIG.lengthwise_scatter_kde_colorbar_min,
+    colorbar_max=DEFAULT_PLOT_CONFIG.lengthwise_scatter_kde_colorbar_max,
 ):
-    norm = plt.Normalize(vmin=0, vmax=4)  # type: ignore (bug)
+    norm = plt.Normalize(vmin=colorbar_min, vmax=colorbar_max)
     colorizer = Colorizer(cmap=cmap, norm=norm)
 
     points = foci_df[[position_key, cell_length_key]].to_numpy(dtype=float).T

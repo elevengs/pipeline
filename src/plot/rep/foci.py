@@ -1,3 +1,5 @@
+from src.plot.config import DEFAULT_PLOT_CONFIG
+
 from functools import partial
 
 import numpy as np
@@ -26,7 +28,7 @@ def plot_foci(
     colorizer: Colorizer,
     coordinate_0_key: str = DEFAULT_COORDINATE_0_KEY,
     coordinate_1_key: str = DEFAULT_COORDINATE_1_KEY,
-    symmetrize: str = "xy",
+    symmetrize: str = DEFAULT_PLOT_CONFIG.rep_foci_symmetrize,
 ):
     """Representative-cell overlay that colors foci by probability density."""
     rep_points = transform_points(
@@ -57,14 +59,18 @@ def plot_rep_foci(
     coordinate_0_key: str = DEFAULT_COORDINATE_0_KEY,
     coordinate_1_key: str = DEFAULT_COORDINATE_1_KEY,
     cmap=sns.color_palette("plasma", as_cmap=True),
-    n_strata=4,
+    n_strata=DEFAULT_PLOT_CONFIG.rep_foci_n_strata,
     outline_margin=0.01,
     subplot_hspace=0.08,
     colorbar_fraction=0.05,
-    symmetrize: str = "xy",
+    scalebar_size_um=DEFAULT_PLOT_CONFIG.rep_foci_scalebar_size_um,
+    average_method=DEFAULT_PLOT_CONFIG.rep_foci_average_method,
+    colorbar_min=DEFAULT_PLOT_CONFIG.rep_foci_colorbar_min,
+    colorbar_max=DEFAULT_PLOT_CONFIG.rep_foci_colorbar_max,
+    symmetrize: str = DEFAULT_PLOT_CONFIG.rep_foci_symmetrize,
 ) -> Figure:
     """Plot foci density on representative cells using the shared layout."""
-    norm = plt.Normalize(vmin=0, vmax=4)
+    norm = plt.Normalize(vmin=colorbar_min, vmax=colorbar_max)
     colorizer = Colorizer(cmap=cmap, norm=norm)
     plot_fn = partial(
         plot_foci,
@@ -83,4 +89,6 @@ def plot_rep_foci(
         outline_margin=outline_margin,
         subplot_hspace=subplot_hspace,
         colorbar_fraction=colorbar_fraction,
+        scalebar_size_um=scalebar_size_um,
+        average_method=average_method,
     )

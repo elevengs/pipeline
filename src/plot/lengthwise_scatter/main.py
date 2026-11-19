@@ -1,3 +1,5 @@
+from src.plot.config import DEFAULT_PLOT_CONFIG
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -20,8 +22,8 @@ def colorbar(ax, cmap, norm):
 
 def plot_lengthwise_scatter(
     foci_df_seq,
-    min_plot_len=0.8,
-    max_plot_len=2.1,
+    min_plot_len=DEFAULT_PLOT_CONFIG.lengthwise_scatter_kde_y_min,
+    max_plot_len=DEFAULT_PLOT_CONFIG.lengthwise_scatter_kde_y_max,
     scatter_fn=None,
     cmap=sns.color_palette("plasma", as_cmap=True),
     position_key=DEFAULT_POSITION_KEY,

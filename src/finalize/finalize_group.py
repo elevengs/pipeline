@@ -1,5 +1,7 @@
 from pathlib import Path
 
+from src.plot.config import DEFAULT_PLOT_CONFIG, PlotConfig
+
 from src.defs import load
 from src.plot.save import (
     save_all_plots,
@@ -34,12 +36,30 @@ def make_group_outputs(
     min_bio_reps: int,
     max_workers: int,
     enable_spideymaps: bool,
+    plot_config: PlotConfig = DEFAULT_PLOT_CONFIG,
 ) -> None:
     """Returns nothing, but creates finalized outputs for one metadata-defined group."""
 
     cells, cell_layers, foci = batch_inventory_from_CSVs(
         sources, root, cells_dir, cell_layers_dir, foci_dir, max_workers
     )
+
+    # all of the FOVs within a group should share the same plot
+    # configs for a given layer - otherwise, what config should
+    # the plot use given that it incorporates multiple FOVs??
+    channel_plot_configs: dict[str, PlotConfig] = {}
+    fovs = {cell.fov.id: cell.fov for cell in cells.values()}
+    for fov in fovs.values():
+        for layer in fov.layers:
+            if not layer.is_fluor:
+                continue
+            config = plot_config.with_additional_config(layer.additional_plot_config)
+            if layer.name in channel_plot_configs and channel_plot_configs[layer.name] != config:
+                raise ValueError(
+                    f'conflicting plot settings for channel "{layer.name}" '
+                    f'in group "{fov.group}" at {fov.source_path}'
+                )
+            channel_plot_configs[layer.name] = config
 
     cells_df, cell_layers_df, foci_by_channel = make_final_dfs(
         cells,
@@ -66,7 +86,8 @@ def make_group_outputs(
             cells_df,
             channel_cell_layers_df,
             channel_foci_df,
-            channel_out
+            channel_out,
+            plot_config=channel_plot_configs[channel_name],
         )
 
     if not enable_spideymaps:

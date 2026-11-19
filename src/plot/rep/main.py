@@ -1,3 +1,5 @@
+from src.plot.config import DEFAULT_PLOT_CONFIG
+
 from collections.abc import Callable
 
 import numpy as np
@@ -18,9 +20,11 @@ def plot_rep_stratum(
     ax: Axes,
     cells: list[Cell],
     plot_fn: RepPlotter | None = None,
+    *,
+    average_method=DEFAULT_PLOT_CONFIG.rep_foci_average_method,
 ) -> CellMap:
     """Draw an overlay (like foci or intensity), then the representative cell outline."""
-    rep_map, transforms = maps_to_rep_map(cells)
+    rep_map, transforms = maps_to_rep_map(cells, average_method=average_method)
     if plot_fn is not None:
         plot_fn(ax, cells, rep_map, transforms)
 
@@ -35,10 +39,12 @@ def plot_rep(
     *,
     mappable: ScalarMappable | None = None,
     colorbar_label: str = "",
-    n_strata=4,
+    n_strata=DEFAULT_PLOT_CONFIG.rep_foci_n_strata,
     outline_margin=0.01,
     subplot_hspace=0.08,
     colorbar_fraction=0.05,
+    scalebar_size_um=DEFAULT_PLOT_CONFIG.rep_foci_scalebar_size_um,
+    average_method=DEFAULT_PLOT_CONFIG.rep_foci_average_method,
 ) -> Figure:
     """Plot representative cells grouped by length.
     """
@@ -62,7 +68,9 @@ def plot_rep(
 
     rep_strata = []
     for ax, stratum in zip(axes[:, 0], strata):
-        rep_strata.append(plot_rep_stratum(ax, list(stratum), plot_fn))
+        rep_strata.append(
+            plot_rep_stratum(ax, list(stratum), plot_fn, average_method=average_method)
+        )
         ax.set_aspect("equal")
         for spine in ax.spines.values():
             spine.set_visible(False)
@@ -138,7 +146,7 @@ def plot_rep(
         ScaleBar(
             1,
             "um",
-            fixed_value=1,
+            fixed_value=scalebar_size_um,
             fixed_units="um",
             color="black",
             box_alpha=0,

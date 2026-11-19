@@ -1,3 +1,5 @@
+from src.plot.config import DEFAULT_PLOT_CONFIG
+
 import numpy as np
 from pandas import DataFrame
 
@@ -9,7 +11,7 @@ def transform_points(
     coordinate_1_key: str,
     *,
     cell_id_key: str = "CELL::ID",
-    symmetrize: str = "xy",
+    symmetrize: str = DEFAULT_PLOT_CONFIG.rep_foci_symmetrize,
 ) -> np.ndarray:
     """Transform centroid-relative vectors in micrometers to a representative cell's coordinate grid.
     """

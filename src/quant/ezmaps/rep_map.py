@@ -1,3 +1,5 @@
+from src.plot.config import DEFAULT_PLOT_CONFIG
+
 from collections.abc import Iterable
 
 import numpy as np
@@ -12,7 +14,7 @@ from astropy.stats import biweight_location
 def maps_to_rep_map(
     cells: Iterable[Cell], 
     n_theta=500,
-    average_method = "tukey_biweight_location"
+    average_method = DEFAULT_PLOT_CONFIG.rep_foci_average_method
 ) -> tuple[CellMap, dict[str, np.ndarray]]:
     """Average cell maps after aligning their true poles.
 

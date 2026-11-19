@@ -1,6 +1,8 @@
 import argparse
 from pathlib import Path
 
+from src.plot.config import DEFAULT_PLOT_CONFIG, PlotConfig, add_plot_config_args
+
 from tqdm.auto import tqdm
 
 from src.util.incl_excl import select_files
@@ -19,6 +21,7 @@ def finalize(
     min_bio_reps: int,
     max_workers: int,
     enable_spideymaps: bool,
+    plot_config: PlotConfig = DEFAULT_PLOT_CONFIG,
 ) -> None:
     sources = list(select_files(root, include=include, exclude=exclude))
     for group, group_sources in tqdm(
@@ -36,6 +39,7 @@ def finalize(
             min_bio_reps,
             max_workers,
             enable_spideymaps,
+            plot_config=plot_config,
         )
 
 
@@ -103,6 +107,7 @@ def main() -> None:
         help="Number of worker threads; set to 0 to use the main thread.",
     )
 
+    add_plot_config_args(parser)
     args = parser.parse_args()
     finalize(
         root=args.root,
@@ -115,6 +120,7 @@ def main() -> None:
         min_bio_reps=args.min_bio_reps,
         max_workers=args.max_workers,
         enable_spideymaps=args.enable_spideymaps,
+        plot_config=PlotConfig.from_args(args),
     )
 
 

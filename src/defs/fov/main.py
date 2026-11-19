@@ -33,6 +33,7 @@ class Layer:
     index: int
 
     additional_focus_detection_config: Namespace | None = None
+    additional_plot_config: Namespace | None = None
 
     @property
     def name(self) -> str:
