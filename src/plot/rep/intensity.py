@@ -6,6 +6,7 @@ from collections.abc import Callable
 from functools import partial
 
 import numpy as np
+from pandas import DataFrame
 from matplotlib import pyplot as plt
 from matplotlib.colors import Normalize
 from matplotlib.path import Path
@@ -62,6 +63,7 @@ def gaussian_intensity(
 def plot_intensity(
     ax,
     cells,
+    cell_layers_df: DataFrame,
     rep_map,
     transforms,
     *,
@@ -70,7 +72,8 @@ def plot_intensity(
     grid_spacing_um: float,
     cmap,
     norm,
-    symmetrize = DEFAULT_PLOT_CONFIG.rep_intensity_symmetrize
+    symmetrize = DEFAULT_PLOT_CONFIG.rep_intensity_symmetrize,
+    apply_threshold = DEFAULT_PLOT_CONFIG.rep_intensity_apply_threshold
 ):
     """Evaluate continuous-position intensity smoothing and draw an overlay.
 
@@ -87,6 +90,10 @@ def plot_intensity(
         )
         for i in range(2)
     ]
+    if apply_threshold:
+        thresholds = cell_layers_df.loc[
+            cell_layers_df["LAYER::CHANNEL_NAME"] == channel_name
+        ].set_index("CELL::ID")["CELL_LAYER::PROPS::DETECTION_THRESHOLD"]
     point_sets = []
     value_sets = []
     for cell in cells:
@@ -104,6 +111,8 @@ def plot_intensity(
         cell_map = cell.map
         crop = cell_map.bounding_box.crop(cell.fov.layer_data(layers[0]))
         mask = np.asarray(cell_map.mask, dtype=bool) & np.isfinite(crop)
+        if apply_threshold:
+            mask &= crop > thresholds.loc[cell.id]
         values = np.asarray(crop[mask], dtype=float)
         vectors = (
             np.argwhere(mask) - cell_map.centroid
@@ -150,6 +159,7 @@ def plot_intensity(
 
 def plot_rep_intensity(
     cells: dict[str, Cell],
+    cell_layers_df: DataFrame,
     channel_name: str,
     *,
     smooth_fn: IntensitySmoother | None = None,
@@ -164,6 +174,7 @@ def plot_rep_intensity(
     scalebar_size_um=DEFAULT_PLOT_CONFIG.rep_intensity_scalebar_size_um,
     average_method=DEFAULT_PLOT_CONFIG.rep_intensity_average_method,
     symmetrize=DEFAULT_PLOT_CONFIG.rep_intensity_symmetrize,
+    apply_threshold=DEFAULT_PLOT_CONFIG.rep_intensity_apply_threshold,
 ):
     """Plot raw fluorescence intensity averaged over aligned cell pixels.
 
@@ -192,6 +203,7 @@ def plot_rep_intensity(
             plot_intensity(
                 ax,
                 stratum,
+                cell_layers_df,
                 rep_map,
                 transforms,
                 channel_name=channel_name,
@@ -200,6 +212,7 @@ def plot_rep_intensity(
                 cmap=cmap,
                 norm=shared_norm,
                 symmetrize=symmetrize,
+                apply_threshold=apply_threshold,
             )
         )
 

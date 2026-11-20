@@ -115,7 +115,9 @@ def save_all_plots(
 ):
     fig_rep_intensity = plot_rep_intensity(
         cells,
+        cell_layers_df,
         channel_name,
+        apply_threshold=plot_config.rep_intensity_apply_threshold,
         symmetrize=plot_config.rep_intensity_symmetrize,
         n_strata=plot_config.rep_intensity_n_strata,
         scalebar_size_um=plot_config.rep_intensity_scalebar_size_um,

@@ -1,4 +1,4 @@
-from argparse import Namespace, ArgumentParser
+from argparse import Namespace, ArgumentParser, BooleanOptionalAction
 from dataclasses import dataclass, fields, replace
 
 
@@ -33,6 +33,7 @@ class PlotConfig:
     rep_intensity_n_strata: int
     rep_intensity_scalebar_size_um: float
     rep_intensity_average_method: str
+    rep_intensity_apply_threshold: bool | None
 
     def __post_init__(self):
         for prefix in (
@@ -114,6 +115,7 @@ DEFAULT_PLOT_CONFIG = PlotConfig(
     rep_intensity_n_strata=4,
     rep_intensity_scalebar_size_um=1.0,
     rep_intensity_average_method="tukey_biweight_location",
+    rep_intensity_apply_threshold=False,
 )
 
 
@@ -196,3 +198,13 @@ def add_plot_config_args(parser: ArgumentParser):
                 f"default: {getattr(DEFAULT_PLOT_CONFIG, f'{prefix}_average_method')}."
             ),
         )
+
+    parser.add_argument(
+        "--rep-intensity-apply-threshold",
+        action=BooleanOptionalAction,
+        default=DEFAULT_PLOT_CONFIG.rep_intensity_apply_threshold,
+        help=(
+            "Whether to apply the focus detection threshold to filter pixels shown on the representative-cell intensity plots; "
+            f"default: {DEFAULT_PLOT_CONFIG.rep_intensity_apply_threshold}."
+        ),
+    )

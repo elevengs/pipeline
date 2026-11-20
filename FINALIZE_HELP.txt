@@ -105,3 +105,7 @@ options:
   --rep-intensity-average-method {mean,tukey_biweight_location}
                         Method for averaging representative cell geometry;
                         default: tukey_biweight_location.
+  --rep-intensity-apply-threshold, --no-rep-intensity-apply-threshold
+                        Whether to apply the focus detection threshold to
+                        filter pixels shown on the representative-cell
+                        intensity plots; default: False.
